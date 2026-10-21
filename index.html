@@ -4,9 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Scout Calcio — Serie A / B</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<!-- caratteri locali: nessuna richiesta a Google Fonts (privacy: l'IP degli utenti non va a terzi) -->
+<link href="fonts/fonts.css?v=20261022a" rel="stylesheet" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#e8ebf0" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
 <script src="branding.js?v=20261022a"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -199,6 +202,12 @@
   .empty{padding:44px 20px;text-align:center;color:var(--nm-text2)}
   .dim{color:var(--nm-text2)}
   .nowrap{white-space:nowrap}
+  .browser-note{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;border-radius:14px;
+    font-size:.84rem;color:var(--nm-text);border:1px solid var(--red);
+    box-shadow:inset -3px -3px 6px var(--nm-light), inset 3px 3px 6px var(--nm-dark)}
+  .browser-note[hidden]{display:none}
+  .browser-note span{flex:1;min-width:220px}
+  .browser-note button{padding:6px 14px;font-size:.8rem}
   .more-row{display:flex;justify-content:center;margin-bottom:24px}
 
   .overlay{position:fixed;inset:0;background:var(--overlay);z-index:100;display:none;
@@ -283,6 +292,10 @@
       </div>
       <button id="btnLang" title="Switch language / Cambia lingua">EN</button>
     </div>
+  </div>
+
+  <div class="browser-note" id="browserNote" role="status" hidden>
+    <span data-i18n="browser_note"></span><button type="button" id="btnBrowserNote" data-i18n="browser_note_ok">Ho capito</button>
   </div>
 
   <details class="filters" id="filters" open>
@@ -551,6 +564,11 @@ function init(){
   wire();
   wireBrand();
   wireFolder();
+  // avviso per chi non usa Chrome/Edge (lì la cartella dati non è disponibile); chiudibile, ricordato
+  if (!('showDirectoryPicker' in window) && !Pref.get('scout_browser_note_ok', false)){
+    $('browserNote').hidden = false;
+    $('btnBrowserNote').addEventListener('click', ()=>{ $('browserNote').hidden = true; Pref.set('scout_browser_note_ok', true); });
+  }
   $('dash').style.display = dashOpen ? '' : 'none';
   $('btnDash').classList.toggle('primary', dashOpen);
   applica();
@@ -975,6 +993,12 @@ function numOr(v,d){ const n=parseFloat(v); return isNaN(n)?d:n; }
 function esc(s){ return (s??'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 init();
+
+// web app installabile da Chrome (icona e finestra propria) + utilizzo senza internet.
+// Solo da http/https: aprendo il file con doppio click (file://) non serve e non è permesso.
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
 </script>
 </body>
 </html>

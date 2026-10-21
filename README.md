@@ -4,7 +4,7 @@ App di scouting per giocatori di **Serie A** e **Serie B**: ricerca con filtri, 
 
 **Apri l'app:** https://enzocaravano-gk.github.io/scout-calcio/
 
-Funziona interamente nel browser e non richiede installazione. I report scouting vengono salvati **solo nel browser di chi li compila** (localStorage): ogni collaboratore vede i propri report, che non vengono condivisi né caricati online.
+Pensata per **Google Chrome** (o Edge) su computer; si può installare come app dalla barra degli indirizzi di Chrome. Funziona interamente nel browser, anche offline, senza contattare servizi esterni. I report scouting restano **sul dispositivo di chi li compila**: in una cartella scelta dall'utente (Chrome/Edge) oppure nel browser. Non vengono condivisi né caricati online.
 
 Guida completa: [LEGGIMI.md](LEGGIMI.md).
 

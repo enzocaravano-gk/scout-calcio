@@ -112,6 +112,29 @@ In alto a destra il pulsante **"Personalizza"** apre un piccolo pannello con:
 Come i report, anche logo, firma e colore restano salvati **solo nel browser** di chi
 li imposta: ogni collaboratore può avere i suoi.
 
+## Browser consigliato e installazione come app
+
+Scout è pensata per **Google Chrome** (va bene anche Edge) **su computer**: solo lì i
+report possono essere salvati in una cartella del dispositivo. Negli altri browser
+compare un avviso e i report restano nel browser (con Esporta/Importa backup).
+
+**Installarla come app (consigliato):** apri il link in Chrome → nella barra degli
+indirizzi clicca l'icona **"Installa"** (o menu ⋮ → "Trasmetti, salva e condividi" →
+"Installa pagina come app"). Scout avrà la sua icona e la sua finestra, si apre anche
+senza internet e Chrome ricorda più facilmente il permesso sulla cartella dati.
+
+## Privacy
+
+- I report non lasciano mai il dispositivo: niente server, niente database online.
+- L'app non usa statistiche, pubblicità, tracciamento o cookie.
+- I caratteri tipografici sono inclusi nell'app: l'app non contatta Google Fonts né
+  altri servizi esterni, quindi l'indirizzo IP di chi la usa non viene inviato a terzi.
+- Il sito è ospitato su GitHub Pages, che come ogni hosting registra gli indirizzi IP
+  delle visite.
+- Chi compila i report (la società / lo scout) è titolare dei dati inseriti: per i
+  minorenni servono base legale e informazione ai genitori, e il dispositivo va protetto
+  (password, cifratura del disco).
+
 ## Cartella dati: i report salvati sul tuo dispositivo
 
 Normalmente i report restano salvati solo nel browser. Puoi invece collegare una
@@ -177,6 +200,8 @@ Il **PDF generato** resta con l'intestazione e le etichette di sezione in italia
 - `i18n.js` → il dizionario Italiano/English
 - `branding.js` → logo, firma allenatore e colore squadra (menu "Personalizza")
 - `folder_sync.js` → cartella dati sul dispositivo e backup dei report
+- `fonts/` → caratteri tipografici inclusi (nessuna richiesta a Google)
+- `manifest.webmanifest`, `sw.js`, `icons/` → installazione come app da Chrome e uso offline
 
 ## E la Serie C?
 

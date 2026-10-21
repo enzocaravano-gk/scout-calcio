@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Scout Calcio — Serie A / B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  /* ---- Neumorphism applicato a tutta l'app: ogni elemento condivide il
+     background della sua superficie madre (--nm-bg) e usa una coppia di ombre
+     chiara/scura per sembrare in rilievo (raised) o incassato (inset).
+     Tema unico chiaro ad alto contrasto. Tutti i colori dell'app passano da qui. ---- */
+  /* Alto contrasto: testo quasi nero (contrasto > 12:1), accenti scuriti
+     per restare leggibili su fondo chiaro (≥ 4.5:1, livello WCAG AA), bordi visibili
+     perché il solo gioco di ombre del neumorfismo su fondo chiaro non basta a separare. */
+  :root{
+    color-scheme:light;
+    --nm-bg:#e8ebf0; --nm-light:#ffffff; --nm-dark:#b3bbc7;
+    --nm-text:#05070b; --nm-text2:#262c36; --nm-text3:#4a515d;
+    --nm-border:rgba(10,14,22,.26); --nm-line:rgba(10,14,22,.16);
+    --row-hover:rgba(10,14,22,.06); --row-zebra:rgba(10,14,22,.025);
+    --overlay:rgba(10,14,22,.5); --elev:0 30px 70px -24px rgba(20,30,50,.4);
+    --gold:#7a4c00; --gold2:#94600a; --blue:#0a4f9c; --green:#14662b; --purple:#5a2dbf; --red:#a3151a; --warn:#7f5100;
+    --role-gk:#6a3fd6; --role-df:#0b62b8; --role-mf:#17803a; --role-fw:#b06d00;
+    --chart-grid:rgba(10,14,22,.13); --chart-axis:rgba(10,14,22,.5); --ring-track:rgba(10,14,22,.12);
+    --font-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --font-head:'Space Grotesk',var(--font-body);
+    --font-mono:'JetBrains Mono','Cascadia Code',monospace;
+  }
+  body{background:var(--nm-bg);color:var(--nm-text);font-family:var(--font-body);
+    font-size:15px;line-height:1.5;padding:20px;min-height:100vh;
+    -webkit-font-smoothing:antialiased}
+  h1{font-family:var(--font-head);font-size:1.4rem;font-weight:700;letter-spacing:-.01em}
+  a{color:var(--gold);text-decoration:none}a:hover{text-decoration:underline}
+  ::selection{background:var(--gold);color:var(--nm-bg)}
+  input[type=range],input[type=checkbox]{accent-color:var(--gold)}
+
+  /* pulsanti: rilievo di default, si "premono" (incassano) al click */
+  button{background:var(--nm-bg);border:1px solid var(--nm-border);color:var(--nm-text);
+    padding:8px 16px;border-radius:10px;cursor:pointer;font-size:.85rem;font-family:inherit;font-weight:500;
+    box-shadow:-4px -4px 8px var(--nm-light), 4px 4px 8px var(--nm-dark);
+    transition:box-shadow .15s ease, transform .1s ease, color .15s ease}
+  button:hover{box-shadow:-5px -5px 10px var(--nm-light), 5px 5px 10px var(--nm-dark)}
+  button:active{box-shadow:inset -3px -3px 6px var(--nm-light), inset 3px 3px 6px var(--nm-dark); transform:scale(.98)}
+  button.primary{color:var(--gold);font-weight:700;border-color:var(--gold)}
+  button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+  /* campi di input: pozzetti incassati nella superficie */
+  input,select{background:var(--nm-bg);border:1px solid var(--nm-border);color:var(--nm-text);
+        padding:8px 11px;border-radius:9px;font-size:.85rem;font-family:inherit;width:100%;
+        box-shadow:inset -3px -3px 6px var(--nm-light), inset 3px 3px 6px var(--nm-dark)}
+  input:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:inset -3px -3px 6px var(--nm-light), inset 3px 3px 6px var(--nm-dark), 0 0 0 1px var(--gold)}
+  input::placeholder{color:var(--nm-text3);opacity:1}
+  .mono{font-variant-numeric:tabular-nums;font-family:var(--font-mono)}
+  .app{max-width:1500px;margin:0 auto}
+
+  .topbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;
+    padding-bottom:14px;margin-bottom:18px;border-bottom:1px solid var(--nm-line)}
+  .topbar h1 b{color:var(--gold);font-weight:700}
+  .topbar small{color:var(--nm-text2);font-size:.78rem;display:block;margin-top:2px;font-family:var(--font-mono);letter-spacing:.01em}
+  .topbar-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .topbar-actions .sep{width:1px;align-self:stretch;background:var(--nm-line);margin:2px 4px}
+
+  /* ---- pannello filtri: <details> nativo, compatto, si apre/chiude con un click ---- */
+  .filters{background:var(--nm-bg);border-radius:20px;padding:4px 20px;margin-bottom:16px;border:1px solid var(--nm-border);
+    box-shadow:-8px -8px 16px var(--nm-light), 8px 8px 16px var(--nm-dark)}
+  .filters>summary{cursor:pointer;font-weight:700;font-size:.85rem;padding:13px 0;color:var(--nm-text);
+    list-style:revert;user-select:none}
+  .filters>summary .active-n{margin-left:8px;color:var(--gold);font-family:var(--font-mono);font-size:.75rem;font-weight:600}
+  .filters[open]>summary{border-bottom:1px solid var(--nm-line);margin-bottom:12px}
+  .filters-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px 18px;padding-bottom:14px}
+  .fg{display:flex;flex-direction:column;gap:5px}
+  .fg label,.fg-dd>summary{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--nm-text2);font-weight:600}
+  .fg .hint{font-size:.66rem;color:var(--nm-text3)}
+  .fg-dd>summary{cursor:pointer;list-style:revert;padding:2px 0}
+  .fg-dd[open]>summary{margin-bottom:5px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{padding:5px 12px;border-radius:20px;background:var(--nm-bg);border:1px solid var(--nm-border);
+    font-size:.8rem;cursor:pointer;user-select:none;color:var(--nm-text2);
+    box-shadow:-3px -3px 6px var(--nm-light), 3px 3px 6px var(--nm-dark);transition:box-shadow .15s,color .15s,border-color .15s}
+  .chip:hover{color:var(--nm-text)}
+  .chip.on{color:var(--gold);font-weight:700;border-color:var(--gold);box-shadow:inset -3px -3px 6px var(--nm-light), inset 3px 3px 6px var(--nm-dark)}
+  .range-row{display:flex;gap:6px;align-items:center}
+  .range-row input{width:100%}
+  .range-row span{color:var(--nm-text3)}
+  .filter-actions{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    padding-top:10px;border-top:1px solid var(--nm-line)}
+
+  .statsbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;
+    padding-bottom:12px;margin-bottom:12px}
+  .statsbar .count{font-family:var(--font-head);font-size:1.15rem;font-weight:600}
+  .statsbar .count b{color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums}
+  .statsbar .count .dim{color:var(--nm-text2);font-family:var(--font-body);font-weight:400;font-size:.92rem}
+
+  /* ---- DASHBOARD ---- */
+  .dash{background:var(--nm-bg);border-radius:28px;padding:26px 26px 22px;margin-bottom:20px;
+    border:1px solid var(--nm-border);box-shadow:var(--elev)}
+  .dash-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px}
+  .dash-kpi{background:var(--nm-bg);border-radius:18px;padding:15px 17px;
+    box-shadow:-7px -7px 14px var(--nm-light), 7px 7px 14px var(--nm-dark);
+    border:1px solid var(--nm-border)}
+  .dash-kpi .v{font-family:var(--font-head);font-size:1.55rem;font-weight:700;color:var(--gold);line-height:1.15;font-variant-numeric:tabular-nums}
+  .dash-kpi .l{font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;color:var(--nm-text2);margin-top:3px;font-weight:600}
+  .dash-kpi.hero .v{color:var(--nm-text);font-size:2rem}
+  @media(min-width:700px){.dash-kpi.hero{grid-column:span 2}}
+  .hero-mini{display:flex;gap:10px;margin-top:14px}
+  .hero-mini>div{flex:1;min-width:0;background:var(--nm-bg);border-radius:12px;padding:9px 4px;text-align:center;
+    box-shadow:inset -4px -4px 8px var(--nm-light), inset 4px 4px 8px var(--nm-dark)}
+  .hero-mini .n{font-family:var(--font-head);font-weight:700;font-size:1rem;color:var(--gold)}
+  .hero-mini .t{font-size:.58rem;color:var(--nm-text2);margin-top:1px;text-transform:uppercase;letter-spacing:.03em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dash-kpi.ring{display:flex;align-items:center;gap:12px}
+  .dash-kpi.ring .ring-txt .v{font-size:1.15rem}
+  .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;padding-bottom:4px}
+  .chart-card{background:var(--nm-bg);border-radius:20px;padding:18px 18px 14px;
+    box-shadow:-8px -8px 16px var(--nm-light), 8px 8px 16px var(--nm-dark);
+    border:1px solid var(--nm-border)}
+  .chart-card h4{font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--nm-text);font-weight:700;
+    margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+  .chart-card h4 .sub{color:var(--nm-text2);text-transform:none;letter-spacing:0;font-weight:500;font-size:.72rem}
+  .chart-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:.68rem;color:var(--nm-text2)}
+  .chart-legend span{display:inline-flex;align-items:center;gap:5px}
+  .chart-legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .dash-toggle{display:flex;align-items:center;gap:6px}
+  @media(max-width:640px){.dash{padding:18px 14px 16px;border-radius:20px}}
+
+  /* tabella: scorre dentro il suo riquadro con intestazione sempre visibile */
+  .table-wrap{overflow:auto;max-height:calc(100vh - 90px);border-radius:16px;margin-bottom:12px;background:var(--nm-bg);
+    border:1px solid var(--nm-border);box-shadow:-8px -8px 16px var(--nm-light), 8px 8px 16px var(--nm-dark)}
+  table{width:100%;border-collapse:separate;border-spacing:0;font-size:.85rem;min-width:820px}
+  th{position:sticky;top:0;z-index:1;background:var(--nm-bg);
+    text-align:left;padding:12px 12px;font-weight:600;color:var(--nm-text2);font-size:.68rem;text-transform:uppercase;
+    letter-spacing:.05em;border-bottom:1px solid var(--nm-line);cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
+  th:hover{color:var(--nm-text)}
+  th.sorted{color:var(--gold);box-shadow:inset 0 -2px 0 var(--gold)}
+  th.num{text-align:right}
+  td{padding:9px 12px;border-bottom:1px solid var(--nm-line);vertical-align:middle}
+  td.num{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+  tbody tr:nth-child(even) td{background:var(--row-zebra)}
+  tr.clickable{cursor:pointer}
+  tbody tr:hover td{background:var(--row-hover)}
+  tbody tr:focus-visible{outline:none}
+  tbody tr:focus-visible td{background:var(--row-hover);box-shadow:inset 0 1px 0 var(--gold),inset 0 -1px 0 var(--gold)}
+  tbody tr:focus-visible td:first-child{box-shadow:inset 3px 0 0 var(--gold),inset 0 1px 0 var(--gold),inset 0 -1px 0 var(--gold)}
+  td .pl-name{font-weight:600}
+  .role-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:middle}
+  .badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:.66rem;background:var(--nm-bg);color:var(--nm-text2);
+    font-family:var(--font-mono);letter-spacing:.02em;font-weight:600;
+    box-shadow:inset -2px -2px 4px var(--nm-light), inset 2px 2px 4px var(--nm-dark)}
+  .badge.serieA{color:var(--gold)}
+  .badge.serieB{color:var(--blue)}
+  .badge.dataset{color:var(--purple)}
+  .chip-dataset{border-style:dashed}
+  .chip-dataset.on{color:var(--purple);border-color:var(--purple)}
+  .fonte{font-size:.62rem;color:var(--nm-text3);letter-spacing:.03em;margin-top:1px;white-space:nowrap}
+  .empty{padding:44px 20px;text-align:center;color:var(--nm-text2)}
+  .dim{color:var(--nm-text2)}
+  .nowrap{white-space:nowrap}
+  .more-row{display:flex;justify-content:center;margin-bottom:24px}
+
+  .overlay{position:fixed;inset:0;background:var(--overlay);z-index:100;display:none;
+    justify-content:center;align-items:center;padding:20px}
+  .overlay.open{display:flex}
+  .panel{background:var(--nm-bg);border-radius:22px;max-width:720px;width:100%;border:1px solid var(--nm-border);
+    max-height:90vh;overflow-y:auto;padding:28px 30px;position:relative;box-shadow:var(--elev)}
+  .panel .x{position:absolute;top:16px;right:18px;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;
+    font-weight:700;background:none;border:none;box-shadow:none;color:var(--nm-text2);cursor:pointer;padding:4px 6px}
+  .panel .x:hover{color:var(--nm-text)}
+  .panel .pname{font-family:var(--font-head);font-size:1.7rem;font-weight:700;letter-spacing:-.01em;padding-right:70px}
+  .panel .pmeta{color:var(--nm-text2);margin:4px 0 18px;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.9rem}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px;margin-bottom:8px}
+  .kpi{background:var(--nm-bg);border-radius:14px;padding:11px 13px;text-align:center;border:1px solid var(--nm-border);
+    box-shadow:-5px -5px 10px var(--nm-light), 5px 5px 10px var(--nm-dark)}
+  .kpi .v{font-family:var(--font-head);font-size:1.35rem;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:.64rem;text-transform:uppercase;color:var(--nm-text2);letter-spacing:.04em;margin-top:2px}
+  .panel h3{font-size:.72rem;text-transform:uppercase;color:var(--nm-text2);letter-spacing:.06em;font-weight:700;margin:22px 0 8px}
+  .kv{width:100%;border-collapse:collapse;font-size:.85rem}
+  .kv td{padding:7px 8px;border-bottom:1px solid var(--nm-line)}
+  .kv td:first-child{color:var(--nm-text2);width:42%}
+
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  @media(max-width:640px){
+    body{padding:12px}
+    .filters-body{grid-template-columns:1fr 1fr}
+    table{font-size:.78rem;min-width:560px}
+    .dash-grid{grid-template-columns:1fr}
+    .panel{padding:22px 18px}
+  }
+  @media print{.topbar-actions,.filters,.more-row{display:none}.table-wrap{max-height:none;overflow:visible;box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div><h1 data-i18n="app_name">Scout</h1><small id="sub">caricamento…</small></div>
+    <div class="topbar-actions">
+      <button id="btnDash" class="dash-toggle" data-i18n="nav_dashboard">Dashboard</button>
+      <button id="btnReport" data-i18n="nav_report">Report scouting</button>
+      <button id="btnCsv" data-i18n="nav_csv">Esporta CSV</button>
+      <button id="btnLang" title="Switch language / Cambia lingua">EN</button>
+    </div>
+  </div>
+
+  <details class="filters" id="filters" open>
+    <summary><span data-i18n="btn_filters">Filtri</span><span class="active-n" id="activeN"></span></summary>
+    <div class="filters-body">
+      <details class="fg fg-dd" id="fgCampionato">
+        <summary data-i18n="filter_campionato">Campionato</summary>
+        <div class="chips" id="fCampionato"></div>
+      </details>
+      <details class="fg fg-dd" id="fgRuolo">
+        <summary data-i18n="filter_ruolo">Ruolo</summary>
+        <div class="chips" id="fRuolo">
+          <span class="chip" data-v="GK" data-i18n="chip_gk">Portieri</span>
+          <span class="chip" data-v="DF" data-i18n="chip_df">Difensori</span>
+          <span class="chip" data-v="MF" data-i18n="chip_mf">Centrocamp.</span>
+          <span class="chip" data-v="FW" data-i18n="chip_fw">Attaccanti</span>
+        </div>
+      </details>
+      <div class="fg">
+        <label data-i18n="filter_squadra">Squadra</label>
+        <input type="text" id="fSquadra" placeholder="es. Inter" data-i18n-ph="ph_squadra" list="squadre" />
+        <datalist id="squadre"></datalist>
+      </div>
+      <div class="fg">
+        <label data-i18n="filter_nome">Cerca nome</label>
+        <input type="text" id="fNome" placeholder="es. Lautaro" data-i18n-ph="ph_nome" />
+      </div>
+      <div class="fg">
+        <label data-i18n="filter_eta">Età</label>
+        <div class="range-row">
+          <input type="number" id="fEtaMin" min="15" max="45" placeholder="min" />
+          <span>—</span>
+          <input type="number" id="fEtaMax" min="15" max="45" placeholder="max" />
+        </div>
+        <span class="hint" data-i18n="hint_eta">Solo Serie A (dati anagrafici da Transfermarkt)</span>
+      </div>
+      <div class="fg">
+        <label data-i18n="filter_valore">Valore minimo (€M)</label>
+        <input type="number" id="fValMin" min="0" step="0.5" placeholder="0" />
+        <span class="hint" data-i18n="hint_valore">Solo Serie A</span>
+      </div>
+      <div class="fg">
+        <label data-i18n="filter_elo">Elo minimo</label>
+        <input type="number" id="fEloMin" min="0" step="10" placeholder="0" />
+      </div>
+      <div class="filter-actions">
+        <button id="btnReset" data-i18n="btn_reset">Reset filtri</button>
+        <span style="flex:1"></span>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--nm-text2);text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="fSoloCompleti" style="width:auto" /> <span data-i18n="chk_solo_completi">solo con valore di mercato</span>
+        </label>
+      </div>
+    </div>
+  </details>
+
+  <div class="statsbar">
+    <div class="count"><b id="nRis">0</b> <span class="dim" data-i18n="stats_su">giocatori su</span> <span id="nTot">0</span></div>
+    <div class="dim" style="font-size:.75rem" id="fonteNote"></div>
+  </div>
+
+  <div class="dash" id="dash">
+    <div class="dash-kpis" id="dashKpis"></div>
+    <div class="dash-grid" id="dashGrid"></div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="tab">
+      <thead><tr>
+        <th data-k="nome" data-i18n="th_nome">Nome</th>
+        <th data-k="ruolo" data-i18n="th_ruolo">Ruolo</th>
+        <th data-k="squadra" data-i18n="th_squadra">Squadra</th>
+        <th data-k="campionato" data-i18n="th_camp">Camp.</th>
+        <th data-k="eta" class="num" data-i18n="th_eta">Età</th>
+        <th data-k="valore_eur" class="num" data-i18n="th_valore">Valore €M</th>
+        <th data-k="elo" class="num" data-i18n="th_elo">Elo</th>
+        <th data-k="gol" class="num" data-i18n="th_gol">Gol</th>
+        <th data-k="scadenza" data-i18n="th_scadenza">Scadenza</th>
+      </tr></thead>
+      <tbody id="tbody"><tr><td colspan="9" class="empty" data-i18n="empty_loading">Caricamento dati…</td></tr></tbody>
+    </table>
+  </div>
+  <div class="more-row" id="moreRow" hidden><button id="btnMore"></button></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="panel" id="panel" role="dialog" aria-modal="true"><button class="x" id="btnX" data-i18n="btn_close">Chiudi</button><div id="detail"></div></div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="giocatori.js"></script>
+<script src="charts.js"></script>
+<script src="scouting_report.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const RUOLI = { GK: I18N.t('role_GK'), DF: I18N.t('role_DF'), MF: I18N.t('role_MF'), FW: I18N.t('role_FW') };
+
+function applyStaticI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = I18N.t(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = I18N.t(el.dataset.i18nPh));
+}
+
+let TUTTI = [], RIS = [];
+let sortKey = 'valore_eur', sortAsc = false;
+let dashOpen = true;
+const F = { campionati:new Set(), ruoli:new Set() };
+const PAGE = 600;          // righe disegnate per volta: "Mostra altri" ne aggiunge altre 600
+let limite = PAGE;
+let datasetCache = null;   // giocatori Dataset ricostruiti dai report: si ricalcola solo quando i report cambiano
+let lastFocus = null;      // elemento da rimettere a fuoco quando si chiude la scheda
+const INPUT_IDS = ['fSquadra','fNome','fEtaMin','fEtaMax','fValMin','fEloMin'];
+
+// ---- piccole preferenze per-utente nel browser (sopravvivono anche al cambio lingua) ----
+const Pref = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} },
+};
+function salvaFiltri(){
+  const inp = {}; INPUT_IDS.forEach(id => inp[id] = $(id).value);
+  Pref.set('scout_filters', { camp:[...F.campionati], ruoli:[...F.ruoli], inp,
+    solo:$('fSoloCompleti').checked, sortKey, sortAsc, dashOpen });
+}
+function ripristinaFiltri(){
+  const p = Pref.get('scout_filters', null); if (!p) return;
+  (p.camp||[]).forEach(v => F.campionati.add(v));
+  (p.ruoli||[]).forEach(v => F.ruoli.add(v));
+  document.querySelectorAll('#fCampionato .chip, #fRuolo .chip').forEach(c=>{
+    const grp = c.parentElement.id === 'fCampionato' ? F.campionati : F.ruoli;
+    c.classList.toggle('on', grp.has(c.dataset.v));
+    c.setAttribute('aria-pressed', grp.has(c.dataset.v));
+  });
+  INPUT_IDS.forEach(id => { if (p.inp && p.inp[id] != null) $(id).value = p.inp[id]; });
+  $('fSoloCompleti').checked = !!p.solo;
+  if (p.sortKey) { sortKey = p.sortKey; sortAsc = !!p.sortAsc; }
+  if (p.dashOpen === false) dashOpen = false;
+}
+
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; }
+
+// ---- init ----------------------------------------------------------------
+function init(){
+  document.documentElement.lang = I18N.getLang();
+  applyStaticI18n();
+  $('btnLang').textContent = (I18N.getLang() === 'it' ? 'EN' : 'IT');
+  if (typeof window.DATI === 'undefined'){
+    $('tbody').innerHTML = `<tr><td colspan="9" class="empty">${I18N.t('warn_no_data')}</td></tr>`;
+    return;
+  }
+  TUTTI = window.DATI.giocatori;
+  $('sub').textContent = I18N.t('sub_line', { n: window.DATI.totale, leghe: window.DATI.campionati.join(' · '), data: window.DATI.generato });
+
+  // chip campionati
+  $('fCampionato').innerHTML = window.DATI.campionati
+    .map(c => `<span class="chip" data-v="${esc(c)}">${esc(c)}</span>`).join('');
+  // chip "Dataset": giocatori inseriti a mano tramite i report scouting (localStorage, non ETL).
+  // È un campionato a tutti gli effetti: selezionarlo isola solo quei giocatori, esattamente
+  // come cliccare "Serie A" mostra solo la Serie A (stesso Set F.campionati, stessa logica OR).
+  $('fCampionato').insertAdjacentHTML('beforeend',
+    `<span class="chip chip-dataset" id="chipDataset" data-v="Dataset" title="${I18N.t('hint_dataset')}">${I18N.t('chip_dataset')}</span>`);
+
+  // i chip sono interruttori: raggiungibili con Tab e attivabili con Invio/Spazio
+  document.querySelectorAll('#fCampionato .chip, #fRuolo .chip').forEach(c=>{
+    c.setAttribute('role','button'); c.tabIndex = 0; c.setAttribute('aria-pressed','false');
+  });
+  ripristinaFiltri();
+  wire();
+  $('dash').style.display = dashOpen ? '' : 'none';
+  $('btnDash').classList.toggle('primary', dashOpen);
+  applica();
+}
+
+// ---- eventi --------------------------------------------------------------
+function wire(){
+  document.querySelectorAll('#fCampionato .chip, #fRuolo .chip').forEach(chip=>{
+    const toggle = ()=>{
+      const grp = chip.parentElement.id === 'fCampionato' ? F.campionati : F.ruoli;
+      const v = chip.dataset.v;
+      const on = chip.classList.toggle('on');
+      chip.setAttribute('aria-pressed', on);
+      on ? grp.add(v) : grp.delete(v);
+      applica();
+    };
+    chip.addEventListener('click', toggle);
+    chip.addEventListener('keydown', e=>{ if (e.key==='Enter' || e.key===' '){ e.preventDefault(); toggle(); } });
+  });
+  // se un report viene salvato/eliminato, ricostruisce i giocatori Dataset e aggiorna la tabella
+  window.addEventListener('scoutReportsChanged', ()=>{ datasetCache = null; applica(); });
+  // digitando non si ricalcola a ogni tasto: si aspetta una breve pausa (tabella + grafici sono pesanti)
+  const applicaLento = debounce(applica, 140);
+  INPUT_IDS.forEach(id=> $(id).addEventListener('input', applicaLento));
+  $('fSoloCompleti').addEventListener('change', applica);
+
+  const ordina = th=>{
+    const k = th.dataset.k;
+    if (sortKey === k) sortAsc = !sortAsc;
+    else { sortKey = k; sortAsc = (k === 'nome' || k === 'squadra'); }
+    limite = PAGE; salvaFiltri(); render();
+  };
+  const thead = $('tab').querySelector('thead');
+  thead.querySelectorAll('th').forEach(th=>{ th.tabIndex = 0; });
+  thead.addEventListener('click', e=>{ const th = e.target.closest('th'); if (th) ordina(th); });
+  thead.addEventListener('keydown', e=>{
+    const th = e.target.closest('th');
+    if (th && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); ordina(th); }
+  });
+
+  // un solo ascoltatore per tutte le righe (invece di 600), anche da tastiera
+  const tbody = $('tbody');
+  tbody.addEventListener('click', e=>{ const tr = e.target.closest('tr[data-id]'); if (tr) dettaglio(tr.dataset.id); });
+  tbody.addEventListener('keydown', e=>{
+    const tr = e.target.closest('tr[data-id]'); if (!tr) return;
+    if (e.key==='Enter' || e.key===' '){ e.preventDefault(); dettaglio(tr.dataset.id); }
+    else if (e.key==='ArrowDown' && tr.nextElementSibling){ e.preventDefault(); tr.nextElementSibling.focus(); }
+    else if (e.key==='ArrowUp' && tr.previousElementSibling){ e.preventDefault(); tr.previousElementSibling.focus(); }
+  });
+  $('btnMore').addEventListener('click', ()=>{ limite += PAGE; render(); });
+
+  $('btnReset').addEventListener('click', ()=>{
+    F.campionati.clear(); F.ruoli.clear();
+    document.querySelectorAll('.chip.on').forEach(c=>{ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); });
+    INPUT_IDS.forEach(id=>$(id).value='');
+    $('fSoloCompleti').checked = false;
+    applica();
+  });
+
+  $('btnCsv').addEventListener('click', esportaCSV);
+  $('btnReport').addEventListener('click', ()=>window.ScoutReport.openList());
+  $('btnDash').addEventListener('click', ()=>{
+    dashOpen = !dashOpen;
+    $('dash').style.display = dashOpen ? '' : 'none';
+    $('btnDash').classList.toggle('primary', dashOpen);
+    if (dashOpen) renderDashboard(RIS);
+    salvaFiltri();
+  });
+  $('btnX').addEventListener('click', chiudi);
+  $('overlay').addEventListener('click', e=>{ if(e.target===$('overlay')) chiudi(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('overlay').classList.contains('open')) chiudi(); });
+
+}
+
+// ---- filtro --------------------------------------------------------------
+function applica(){
+  const nome = $('fNome').value.trim().toLowerCase();
+  const squadra = $('fSquadra').value.trim().toLowerCase();
+  const etaMin = numOr($('fEtaMin').value, null);
+  const etaMax = numOr($('fEtaMax').value, null);
+  const valMin = numOr($('fValMin').value, 0);
+  const eloMin = numOr($('fEloMin').value, 0);
+  const soloCompleti = $('fSoloCompleti').checked;
+
+  // Dataset è un campionato come Serie A/Serie B: sempre nel pool, la selezione dei chip
+  // (F.campionati, la stessa logica OR di sempre) decide quali campionati restano visibili
+  if (!datasetCache) datasetCache = getDatasetPlayers();
+  const pool = TUTTI.concat(datasetCache);
+  refreshSquadreDatalist(pool);
+
+  RIS = pool.filter(g=>{
+    if (F.campionati.size && !F.campionati.has(g.campionato)) return false;
+    if (F.ruoli.size && !F.ruoli.has(g.ruolo)) return false;
+    if (nome && !g.nome.toLowerCase().includes(nome)) return false;
+    if (squadra && !(g.squadra||'').toLowerCase().includes(squadra)) return false;
+    if (etaMin !== null && (g.eta === null || g.eta < etaMin)) return false;
+    if (etaMax !== null && (g.eta === null || g.eta > etaMax)) return false;
+    if (valMin > 0 && (!g.valore_eur || g.valore_eur/1e6 < valMin)) return false;
+    if (eloMin > 0 && (!g.elo || g.elo < eloMin)) return false;
+    if (soloCompleti && !g.valore_eur) return false;
+    return true;
+  });
+  // quanti filtri sono attivi: mostrato accanto a "Filtri", utile quando il pannello è chiuso
+  const nAttivi = F.campionati.size + F.ruoli.size + INPUT_IDS.filter(id=>$(id).value.trim()).length + (soloCompleti?1:0);
+  $('activeN').textContent = nAttivi ? `· ${nAttivi}` : '';
+  limite = PAGE;
+  salvaFiltri();
+  render();
+}
+
+function render(){
+  RIS.sort((a,b)=>cmp(a,b,sortKey,sortAsc));
+  $('nRis').textContent = RIS.length;
+  $('nTot').textContent = TUTTI.length;
+
+  document.querySelectorAll('#tab th').forEach(th=>{
+    const on = th.dataset.k === sortKey;
+    th.classList.toggle('sorted', on);
+    if (on) th.setAttribute('aria-sort', sortAsc ? 'ascending' : 'descending'); else th.removeAttribute('aria-sort');
+  });
+
+  if (!RIS.length){
+    $('tbody').innerHTML = `<tr><td colspan="9" class="empty">${I18N.t('empty_no_results')}</td></tr>`;
+    $('moreRow').hidden = true; $('fonteNote').textContent = '';
+    if (dashOpen) renderDashboard(RIS);
+    return;
+  }
+
+  const rows = RIS.slice(0, limite).map(g=>`
+    <tr class="clickable" data-id="${esc(g.id)}" tabindex="0">
+      <td><span class="pl-name">${esc(g.nome)}</span><div class="fonte">${esc(g.fonti.join(' · '))}</div></td>
+      <td class="nowrap"><span class="role-dot" style="background:${Charts.ROLE_COLOR[g.ruolo]||'var(--nm-text3)'}"></span>${RUOLI[g.ruolo]||esc(g.ruolo_dettaglio)||'—'}</td>
+      <td>${esc(g.squadra)||'<span class=dim>—</span>'}</td>
+      <td><span class="badge ${campBadgeClass(g.campionato)}">${esc(g.campionato==='Dataset'?'Dataset':g.campionato.replace('Serie ',''))}</span></td>
+      <td class="num">${g.eta ?? '<span class=dim>—</span>'}</td>
+      <td class="num mono">${g.valore_eur ? (g.valore_eur/1e6).toFixed(1) : '<span class=dim>—</span>'}</td>
+      <td class="num mono">${g.elo ? Math.round(g.elo) : '<span class=dim>—</span>'}</td>
+      <td class="num mono">${g.gol ?? '<span class=dim>—</span>'}</td>
+      <td class="mono nowrap">${esc(g.scadenza) || '<span class=dim>—</span>'}</td>
+    </tr>`).join('');
+  $('tbody').innerHTML = rows;
+  const mostrati = Math.min(limite, RIS.length);
+  $('fonteNote').textContent = RIS.length > mostrati ? I18N.t('stats_mostrati', { n: mostrati, tot: RIS.length }) : '';
+  $('moreRow').hidden = RIS.length <= mostrati;
+  $('btnMore').textContent = I18N.t('btn_more', { n: Math.min(PAGE, RIS.length - mostrati) });
+
+  if (dashOpen) renderDashboard(RIS);
+}
+
+// ---- dashboard: KPI + grafici agganciati ai risultati filtrati ------------
+// anello di progresso SVG (stile "Month progress"), monocromo
+function ringSVG(pct){
+  const p = Math.max(0, Math.min(100, pct));
+  const r = 30, C = 2*Math.PI*r, off = C*(1-p/100);
+  return `<svg viewBox="0 0 76 76" width="64" height="64">
+    <circle cx="38" cy="38" r="${r}" fill="none" style="stroke:var(--ring-track)" stroke-width="7"/>
+    <circle cx="38" cy="38" r="${r}" fill="none" style="stroke:var(--gold)" stroke-width="7" stroke-linecap="round"
+      stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 38 38)"/>
+  </svg>`;
+}
+
+function renderDashboard(list){
+  const dashGrid = $('dashGrid'), dashKpis = $('dashKpis');
+  if (!list.length){
+    dashKpis.innerHTML = '';
+    dashGrid.innerHTML = `<div class="chart-card" style="grid-column:1/-1"><p style="padding:20px;text-align:center;color:var(--nm-text2)">${I18N.t('dash_no_data')}</p></div>`;
+    return;
+  }
+  const RC = Charts.ROLE_COLOR;
+  const conEta = list.filter(g=>g.eta!=null);
+  const conValore = list.filter(g=>g.valore_eur);
+  const conElo = list.filter(g=>g.elo);
+  const conEntrambi = list.filter(g=>g.valore_eur && g.elo);
+  const hasDataset = list.some(g=>g.campionato==='Dataset');
+
+  // ---- KPI ----
+  const somma = arr => arr.reduce((s,v)=>s+v,0);
+  const etaMedia = conEta.length ? somma(conEta.map(g=>g.eta))/conEta.length : null;
+  const eloMedio = conElo.length ? somma(conElo.map(g=>g.elo))/conElo.length : null;
+  const serieACount = list.filter(g=>g.campionato==='Serie A').length;
+  const serieBCount = list.filter(g=>g.campionato==='Serie B').length;
+  const datasetCount = list.filter(g=>g.campionato==='Dataset').length;
+  const pctValore = Math.round(conValore.length/list.length*100);
+  const kpi = (v,l) => `<div class="dash-kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+
+  dashKpis.innerHTML = [
+    `<div class="dash-kpi hero">
+      <div class="v">${list.length}</div><div class="l">${I18N.t('dash_kpi_players')}</div>
+      <div class="hero-mini">
+        <div><div class="n">${serieACount}</div><div class="t">Serie A</div></div>
+        <div><div class="n">${serieBCount}</div><div class="t">Serie B</div></div>
+        <div><div class="n">${datasetCount}</div><div class="t">Dataset</div></div>
+      </div>
+    </div>`,
+    `<div class="dash-kpi ring">${ringSVG(pctValore)}<div class="ring-txt"><div class="v">${pctValore}%</div><div class="l">${I18N.t('dash_kpi_coverage')}</div></div></div>`,
+    etaMedia!=null ? kpi(etaMedia.toFixed(1), I18N.t('dash_kpi_age')) : '',
+    eloMedio!=null ? kpi(Math.round(eloMedio), I18N.t('dash_kpi_elo')) : '',
+  ].join('');
+
+  // ---- grafico 1: distribuzione per ruolo ----
+  const RUOLI_ORD = ['GK','DF','MF','FW'];
+  const countRuolo = RUOLI_ORD.map(r => list.filter(g=>g.ruolo===r).length);
+  const chartRuolo = Charts.bar({
+    labels: RUOLI_ORD, values: countRuolo,
+    colors: RUOLI_ORD.map(r=>RC[r]), height: 170,
+  });
+
+  // ---- grafico 2: distribuzione età ----
+  const chartEta = Charts.histogram({
+    values: conEta.map(g=>g.eta), bucketSize: 3, min: 15, max: 42, color: 'var(--blue)', height: 170,
+  });
+
+  // ---- grafico 3: scatter valore vs elo (occasioni: alto elo, basso valore) ----
+  const puntiScatter = conEntrambi.map(g => ({
+    x: +(g.valore_eur/1e6).toFixed(1), y: g.elo, color: RC[g.ruolo]||'var(--gold)', label: g.nome,
+  }));
+  const chartScatter = Charts.scatter({
+    points: puntiScatter, height: 220, xLabel: I18N.t('scatter_xlabel'), yLabel: I18N.t('scatter_ylabel'),
+  });
+
+  // ---- grafico 4: top 8 squadre per valore rosa (solo con dato valore) ----
+  const perSquadra = {};
+  conValore.forEach(g=>{ perSquadra[g.squadra] = (perSquadra[g.squadra]||0) + g.valore_eur; });
+  const topSquadre = Object.entries(perSquadra).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const chartSquadre = Charts.hbar({
+    labels: topSquadre.map(([s])=>s), values: topSquadre.map(([,v])=>+(v/1e6).toFixed(0)),
+    color: 'var(--gold)', unit: 'M',
+  });
+
+  const legendaRuoli = `<div class="chart-legend">${RUOLI_ORD.map(r=>
+    `<span><i style="background:${RC[r]}"></i>${RUOLI[r]}</span>`).join('')}</div>`;
+
+  dashGrid.innerHTML = `
+    <div class="chart-card">
+      <h4><span>${I18N.t('dash_chart1_title')} <span class="sub">${I18N.t('dash_chart1_sub',{n:list.length})}</span></span></h4>
+      ${chartRuolo}
+    </div>
+    <div class="chart-card">
+      <h4><span>${I18N.t('dash_chart2_title')} <span class="sub">${I18N.t('dash_chart2_sub',{n:conEta.length})}</span></span></h4>
+      ${chartEta}
+    </div>
+    <div class="chart-card">
+      <h4><span>${I18N.t('dash_chart3_title')} <span class="sub">${I18N.t('dash_chart3_sub')}</span></span></h4>
+      ${chartScatter}
+      ${legendaRuoli}
+    </div>
+    <div class="chart-card">
+      <h4><span>${I18N.t('dash_chart4_title')} <span class="sub">${I18N.t(hasDataset?'dash_chart4_sub_all':'dash_chart4_sub')}</span></span></h4>
+      ${chartSquadre}
+    </div>
+  `;
+}
+
+// ---- ordinamento (una sola funzione, tutte le colonne) -------------------
+function cmp(a,b,k,asc){
+  let va=a[k], vb=b[k];
+  const nullA = va===null||va===undefined||va==='';
+  const nullB = vb===null||vb===undefined||vb==='';
+  if (nullA && nullB) return 0;
+  if (nullA) return 1;          // i vuoti sempre in fondo
+  if (nullB) return -1;
+  if (typeof va === 'string') return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+  return asc ? va-vb : vb-va;
+}
+
+// ---- Dataset: giocatori inseriti a mano tramite i report scouting --------
+// Legge i report salvati (localStorage, gestiti da scouting_report.js), li
+// raggruppa per giocatore (nome+cognome) e prende la sessione più recente di
+// ciascuno per costruire una riga con LO STESSO schema dei giocatori del DB,
+// così tabella/filtri/dashboard/scheda-dettaglio funzionano senza modifiche.
+function campBadgeClass(camp){
+  return camp === 'Serie A' ? 'serieA' : camp === 'Serie B' ? 'serieB' : 'dataset';
+}
+function refreshSquadreDatalist(pool){
+  const squadre = [...new Set(pool.map(g => g.squadra).filter(Boolean))].sort();
+  $('squadre').innerHTML = squadre.map(s => `<option value="${esc(s)}">`).join('');
+}
+function ageFromDOB(d){
+  if (!d) return null;
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return null;
+  const oggi = new Date();
+  let eta = oggi.getFullYear() - dt.getFullYear();
+  if (oggi.getMonth() < dt.getMonth() || (oggi.getMonth()===dt.getMonth() && oggi.getDate()<dt.getDate())) eta--;
+  return eta;
+}
+function parseValoreStimato(v){
+  if (!v) return null;
+  const m = String(v).match(/([\d.,]+)\s*(m|k)?/i);
+  if (!m) return null;
+  const num = parseFloat(m[1].replace(',', '.'));
+  if (isNaN(num)) return null;
+  const mult = (m[2] && m[2].toLowerCase()==='k') ? 1e3 : 1e6; // default €M se non specificato
+  return Math.round(num * mult);
+}
+function guessRuoloCode(text){
+  const t = (text||'').toLowerCase();
+  if (/portier|goalkeep|keeper|\bgk\b|\bpor\b/.test(t)) return 'GK';
+  if (/difens|terzino|\bback\b|\bdf\b/.test(t)) return 'DF';
+  if (/centrocamp|midfield|mediano|trequart|regista|mezzala|\bmf\b/.test(t)) return 'MF';
+  if (/attacc|forward|punta|striker|winger|\bfw\b|\bala\b/.test(t)) return 'FW';
+  return '';
+}
+function getDatasetPlayers(){
+  if (!window.ScoutReport) return [];
+  const reports = window.ScoutReport._store.all();
+  const groups = new Map();
+  reports.forEach(r=>{
+    const key = `${(r.nome||'').trim()} ${(r.cognome||'').trim()}`.trim().toLowerCase();
+    if (!key) return;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  });
+  const out = [];
+  groups.forEach(list=>{
+    list.sort((a,b)=> new Date(b.data_osservazione||b.created_at||'').getTime() - new Date(a.data_osservazione||a.created_at||'').getTime());
+    const r = list[0];
+    out.push({
+      id: 'ds_' + r.id,
+      nome: `${r.nome||''} ${r.cognome||''}`.trim() || '—',
+      eta: ageFromDOB(r.data_nascita),
+      data_nascita: r.data_nascita || null,
+      ruolo: guessRuoloCode(r.ruolo_primario),
+      ruolo_dettaglio: r.ruolo_primario || null,
+      squadra: r.squadra || null,
+      campionato: 'Dataset',
+      nazionalita: r.nazionalita || null,
+      piede: r.piede || null,
+      altezza: r.altezza ? Number(r.altezza) : null,
+      valore_eur: parseValoreStimato(r.valore_stimato),
+      scadenza: r.contratto || null,
+      elo: null, rank: null, partite: null, gol: null, assist: null, minuti: null,
+      url_tm: null,
+      fonti: ['report scouting'],
+      _reportId: r.id,
+      _sessionsCount: list.length,
+    });
+  });
+  return out;
+}
+
+// ---- dettaglio -----------------------------------------------------------
+function dettaglio(id){
+  // cerca prima in RIS (contiene anche i giocatori Dataset, se il chip è attivo)
+  const g = RIS.find(x=>x.id===id) || TUTTI.find(x=>x.id===id); if(!g) return;
+  const meta = [
+    RUOLI[g.ruolo]||null, g.ruolo_dettaglio, g.squadra, g.campionato,
+    g.eta?I18N.t('anni',{n:g.eta}):null, g.nazionalita,
+    g.altezza?I18N.t('cm',{n:g.altezza}):null, g.piede?I18N.t('piede_di',{p:g.piede}):null
+  ].filter(Boolean).map(x=>`<span>${esc(String(x))}</span>`).join('<span class="dim">•</span>');
+
+  const kpi = (v,l)=>`<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+  const kpis = [
+    g.valore_eur ? kpi('€'+(g.valore_eur/1e6).toFixed(1)+'M',I18N.t('detail_kpi_valore')) : '',
+    g.elo ? kpi(Math.round(g.elo),I18N.t('detail_kpi_elo')) : '',
+    g.rank ? kpi('#'+g.rank,I18N.t('detail_kpi_rank')) : '',
+    g.partite!=null ? kpi(g.partite,I18N.t('detail_kpi_partite')) : '',
+    g.gol!=null ? kpi(g.gol,I18N.t('detail_kpi_gol')) : '',
+    g.assist!=null ? kpi(g.assist,I18N.t('detail_kpi_assist')) : '',
+    g.minuti ? kpi(g.minuti.toLocaleString('it'),I18N.t('detail_kpi_minuti')) : '',
+  ].filter(Boolean).join('');
+
+  const riga=(l,v)=> v ? `<tr><td>${l}</td><td>${esc(String(v))}</td></tr>` : '';
+  $('detail').innerHTML = `
+    <div class="pname">${esc(g.nome)}</div>
+    <div class="pmeta">${meta}</div>
+    <div class="kpis">${kpis || `<span class="dim">${I18N.t('detail_no_stats')}</span>`}</div>
+    <h3>${I18N.t('detail_h3_anagrafica')}</h3>
+    <table class="kv">
+      ${riga(I18N.t('detail_row_nascita'), g.data_nascita)}
+      ${riga(I18N.t('detail_row_nazionalita'), g.nazionalita)}
+      ${riga(I18N.t('detail_row_ruolo'), g.ruolo_dettaglio || RUOLI[g.ruolo])}
+      ${riga(I18N.t('detail_row_altezza'), g.altezza?g.altezza+' cm':'')}
+      ${riga(I18N.t('detail_row_piede'), g.piede)}
+      ${riga(I18N.t('detail_row_scadenza'), g.scadenza)}
+      ${riga(I18N.t('detail_row_fonti'), g.fonti.join(', '))}
+    </table>
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="primary" id="btnNuovoReport">${I18N.t('detail_btn_report')}</button>
+      ${g._reportId?`<button id="btnVediReport">${I18N.t('detail_btn_view_report')}</button>`:''}
+      ${g.url_tm?`<button id="btnTm">${I18N.t('detail_btn_tm')}</button>`:''}
+    </div>
+    ${g.campionato==='Serie B'?`<p class="dim" style="margin-top:14px;font-size:.82rem">${I18N.t('detail_serieb_note')}</p>`:''}
+    ${g.campionato==='Dataset'?`<p class="dim" style="margin-top:14px;font-size:.82rem">${I18N.t('dataset_note')}</p>`:''}
+  `;
+  if (!$('overlay').classList.contains('open')) lastFocus = document.activeElement;
+  $('overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  $('btnX').focus();
+  const bnr = $('btnNuovoReport');
+  if (bnr) bnr.addEventListener('click', ()=>{ chiudi(); window.ScoutReport.openForm(g); });
+  const bvr = $('btnVediReport');
+  if (bvr) bvr.addEventListener('click', ()=>{ chiudi(); window.ScoutReport.openView(g._reportId); });
+  const btm = $('btnTm');
+  if (btm) btm.addEventListener('click', ()=> window.open(g.url_tm, '_blank', 'noopener'));
+}
+function chiudi(){
+  $('overlay').classList.remove('open'); document.body.style.overflow='';
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  lastFocus = null;
+}
+
+// ---- export --------------------------------------------------------------
+function esportaCSV(){
+  if(!RIS.length){ alert(I18N.t('alert_no_export')); return; }
+  // separatore ";" e BOM UTF-8: Excel in italiano apre il file già diviso in colonne e con gli accenti corretti
+  const SEP = ';';
+  const H = I18N.t('csv_headers').split(',');
+  const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const body=RIS.map(g=>[g.nome,g.ruolo,g.squadra,g.campionato,g.eta,g.valore_eur,g.elo?Math.round(g.elo):'',g.rank,
+                         g.partite,g.gol,g.assist,g.scadenza,g.fonti.join('+')].map(q).join(SEP));
+  const csv='\uFEFF'+[H.map(q).join(SEP),...body].join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`scout_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);   // revocare subito può annullare il download in alcuni browser
+}
+
+// ---- helpers -------------------------------------------------------------
+function numOr(v,d){ const n=parseFloat(v); return isNaN(n)?d:n; }
+function esc(s){ return (s??'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+init();
+</script>
+</body>
+</html>

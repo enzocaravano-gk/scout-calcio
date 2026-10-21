@@ -1,0 +1,4 @@
+.DS_Store
+.claude/
+fbref_transfermarkt_mapping.csv
+__pycache__/

@@ -160,8 +160,17 @@
     return `<svg viewBox="-12 -6 234 222" width="100%" height="240" style="display:block;margin:0 auto;overflow:visible">${grid}${spokes}${poly}${dots}${labs}</svg>`;
   }
 
-  function pageHead(sub) { return `<div class="pg-head"><div class="brand"><span class="dot"></span><span>SPORTHUB · Scouting</span></div><div>${esc(sub)}</div></div>`; }
-  function pageFoot(sub, n, t) { return `<div class="pg-foot"><span>${esc(sub)}</span><span>pag <b>${String(n).padStart(2,'0')}</b> / ${String(t).padStart(2,'0')}</span></div>`; }
+  // personalizzazione da branding.js (menu "Personalizza"): logo società, firma allenatore, colore squadra
+  function brand() { return (window.Brand && window.Brand.get()) || { logo: null, coach: '', accent: null, customAccent: false }; }
+  function pageHead(sub) {
+    const b = brand();
+    const mark = b.logo ? `<img class="club-logo" src="${b.logo}" alt=""/>` : `<span class="dot"></span>`;
+    return `<div class="pg-head"><div class="brand">${mark}<span>SPORTHUB · Scouting</span></div><div>${esc(sub)}</div></div>`;
+  }
+  function pageFoot(sub, n, t) {
+    const coach = brand().coach;
+    return `<div class="pg-foot"><span>${esc(sub)}</span>${coach ? `<span class="sign">Firma allenatore <b>${esc(coach)}</b></span>` : ''}<span>pag <b>${String(n).padStart(2,'0')}</b> / ${String(t).padStart(2,'0')}</span></div>`;
+  }
 
   function renderSessionCard(s, idx, recent) {
     const cl = CONSI_LABELS[s.considerazione] ?? '—', cc = CONSI_CLASS[s.considerazione] ?? '';
@@ -236,7 +245,7 @@
             <div style="flex:1;text-align:center"><div style="font:600 9px/1 'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.1em">GLOBALE</div><div style="font:700 22px/1.2 'Space Grotesk',sans-serif;color:#0f1320">${mG}</div></div></div></div></div>
       <div class="section-title" style="margin-top:14px"><span class="num">01</span>Attributi tecnici<span class="rule"></span><span class="chip muted">media ${mT.toFixed(1)}/10</span></div>
       <div class="grid-2" style="margin-top:6px">
-        <div class="panel"><div class="ptitle"><span>Radar tecnico</span><span class="acc">${A_TEC.length} voci</span></div>${radarSVG(A_TEC.map(a=>Number(latest.attr_tecnici?.[a.id])||0),A_TEC.map(a=>a.lab),'#2f6fed')}</div>
+        <div class="panel"><div class="ptitle"><span>Radar tecnico</span><span class="acc">${A_TEC.length} voci</span></div>${radarSVG(A_TEC.map(a=>Number(latest.attr_tecnici?.[a.id])||0),A_TEC.map(a=>a.lab),brand().customAccent?brand().accent:'#2f6fed')}</div>
         <div class="panel"><div class="ptitle"><span>Dettaglio tecnico</span><span class="acc">1–10</span></div>${A_TEC.map(barRowT).join('')}</div></div>
       <div style="margin-top:8px;padding:6px 10px;background:var(--tint);border-radius:6px;font-size:10.5px;color:var(--muted)">Report generato il ${esc(today)} · ${sessions.length} sessione${sessions.length>1?'i':''} di valutazione</div>
       ${pageFoot(sub, 1, totalPages)}</section>`);
@@ -743,11 +752,19 @@
   }
 
   // buildReportHead (identico a SportHub) — CSS PDF sfondo bianco A4
+  // colore squadra scelto → sostituisce l'azzurro del PDF (titoli, chip, radar tecnico, sfondi tenui)
+  function accentCSS() {
+    const b = brand();
+    if (!b.customAccent) return '';
+    const a = b.accent;
+    return `:root{--azzurro:${a};--azzurro-2:${a};--azzurro-ink:${a};` +
+      `--azzurro-3:color-mix(in srgb,${a} 22%,#fff);--azzurro-4:color-mix(in srgb,${a} 9%,#fff)}`;
+  }
   function buildReportHead(title) {
     return `<meta charset="utf-8"/><title>${title.replace(/[<>&"]/g,'')}</title>
       <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
       <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
-      <style>${REPORT_CSS}</style>`;
+      <style>${REPORT_CSS}${accentCSS()}</style>`;
   }
 
   const REPORT_CSS = `
@@ -756,7 +773,7 @@
 .deck{display:flex;flex-direction:column;align-items:center;gap:24px}
 .page{width:var(--w);height:var(--h);background:var(--paper);box-shadow:0 24px 60px -24px rgba(15,19,32,.18);position:relative;overflow:hidden;padding:22mm 18mm 18mm;display:flex;flex-direction:column}
 .pg-head{position:absolute;left:18mm;right:18mm;top:9mm;display:flex;align-items:center;justify-content:space-between;font:500 9.5px/1 "JetBrains Mono",monospace;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
-.pg-head .brand{display:flex;align-items:center;gap:8px;color:var(--ink-2)}.pg-head .brand .dot{width:8px;height:8px;border-radius:2px;background:var(--azzurro);box-shadow:0 0 0 3px var(--azzurro-3)}
+.pg-head .brand{display:flex;align-items:center;gap:8px;color:var(--ink-2)}.pg-head .brand .club-logo{height:22px;width:auto;max-width:60px;object-fit:contain}.pg-foot .sign{color:var(--muted);letter-spacing:.06em}.pg-foot .sign b{color:var(--ink-2);font-weight:600;letter-spacing:.02em;text-transform:none;font-size:10px}.pg-head .brand .dot{width:8px;height:8px;border-radius:2px;background:var(--azzurro);box-shadow:0 0 0 3px var(--azzurro-3)}
 .pg-foot{position:absolute;left:18mm;right:18mm;bottom:9mm;display:flex;align-items:center;justify-content:space-between;font:500 9px/1 "JetBrains Mono",monospace;letter-spacing:.08em;color:var(--muted-2);text-transform:uppercase;border-top:1px solid var(--line);padding-top:6px}.pg-foot b{color:var(--ink-2)}
 h1,h2,h3,h4{font-family:"Space Grotesk",sans-serif;font-weight:600;margin:0}
 .section-title{font-family:"Space Grotesk";font-weight:600;font-size:18px;color:var(--ink);display:flex;align-items:baseline;gap:10px;margin-bottom:10px}

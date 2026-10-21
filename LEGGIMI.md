@@ -97,6 +97,21 @@ L'app usa un unico tema chiaro con testo quasi nero e colori scuriti apposta per
 essere leggibile anche in pieno sole o su schermi poco luminosi (contrasto conforme
 alle linee guida di accessibilità WCAG AA).
 
+## Personalizza: logo, firma allenatore, colore squadra
+
+In alto a destra il pulsante **"Personalizza"** apre un piccolo pannello con:
+
+- **Logo società**: "Carica logo" per scegliere un'immagine dal computer. Compare in
+  alto accanto al titolo e nell'intestazione di ogni pagina del PDF. "Rimuovi" lo toglie.
+  L'immagine viene rimpicciolita automaticamente, così non occupa lo spazio dei report.
+- **Firma allenatore**: scrivi nome e cognome. Compare in fondo a ogni pagina del PDF.
+- **Colore squadra**: scegli tra 8 colori. Diventa il colore di accento di tutta l'app
+  (pulsanti attivi, numeri, grafici, barre dei valori) e del PDF. Sono tutti colori
+  scuri, quindi le scritte restano sempre ben leggibili.
+
+Come i report, anche logo, firma e colore restano salvati **solo nel browser** di chi
+li imposta: ogni collaboratore può avere i suoi.
+
 ## Cambio lingua (Italiano / English)
 
 In alto a destra c'è il pulsante **"EN"** (o **"IT"** se sei già in inglese).
@@ -128,6 +143,7 @@ Il **PDF generato** resta con l'intestazione e le etichette di sezione in italia
 - `scouting_report.js` → il modulo di valutazione + generatore PDF (stile SportHub)
 - `charts.js` → la libreria di grafici SVG usata dalla Dashboard
 - `i18n.js` → il dizionario Italiano/English
+- `branding.js` → logo, firma allenatore e colore squadra (menu "Personalizza")
 
 ## E la Serie C?
 

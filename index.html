@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="branding.js?v=20261021b"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   /* ---- Neumorphism applicato a tutta l'app: ogni elemento condivide il
@@ -63,7 +64,37 @@
   .topbar h1 b{color:var(--gold);font-weight:700}
   .topbar small{color:var(--nm-text2);font-size:.78rem;display:block;margin-top:2px;font-family:var(--font-mono);letter-spacing:.01em}
   .topbar-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .topbar-actions .sep{width:1px;align-self:stretch;background:var(--nm-line);margin:2px 4px}
+  .brand-id{display:flex;align-items:center;gap:14px;min-width:0}
+  .club-logo{height:52px;width:auto;max-width:120px;object-fit:contain;border-radius:12px;padding:5px;background:var(--nm-bg);
+    border:1px solid var(--nm-border);box-shadow:-4px -4px 8px var(--nm-light), 4px 4px 8px var(--nm-dark)}
+  .club-logo[hidden]{display:none}
+
+  /* ---- menu Personalizza (logo, firma, colore): pannello neumorfico a tendina ---- */
+  .brand-wrap{position:relative}
+  .brand-menu{position:absolute;top:calc(100% + 12px);right:0;z-index:90;width:332px;max-width:calc(100vw - 32px);
+    background:var(--nm-bg);border:1px solid var(--nm-border);border-radius:18px;padding:6px 18px;
+    box-shadow:-8px -8px 16px var(--nm-light), 8px 8px 16px var(--nm-dark), var(--elev)}
+  .brand-menu[hidden]{display:none}
+  .bm-sec{padding:13px 0;border-bottom:1px solid var(--nm-line)}
+  .bm-sec:last-of-type{border-bottom:none}
+  .bm-label{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--nm-text2);font-weight:700;margin-bottom:9px}
+  .bm-hint{font-size:.7rem;color:var(--nm-text3);margin-top:6px}
+  .bm-logo{display:flex;align-items:center;gap:12px}
+  .bm-logo-prev{width:58px;height:58px;flex:0 0 58px;border-radius:12px;display:grid;place-items:center;overflow:hidden;
+    font-size:.62rem;color:var(--nm-text3);text-align:center;line-height:1.2;padding:4px;
+    box-shadow:inset -3px -3px 6px var(--nm-light), inset 3px 3px 6px var(--nm-dark)}
+  .bm-logo-prev img{max-width:100%;max-height:100%;object-fit:contain}
+  .bm-logo-btns{display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+  .bm-logo-btns button{padding:6px 13px;font-size:.8rem}
+  .bm-link{background:none;border:none;box-shadow:none;padding:2px 0;color:var(--red);font-weight:600}
+  .bm-link:hover,.bm-link:active{box-shadow:none;transform:none;text-decoration:underline}
+  .swatches{display:flex;flex-wrap:wrap;gap:9px}
+  .swatch{width:28px;height:28px;padding:0;border-radius:50%;border:3px solid var(--nm-bg);background:var(--c);
+    box-shadow:-3px -3px 6px var(--nm-light), 3px 3px 6px var(--nm-dark)}
+  .swatch:hover{box-shadow:-4px -4px 8px var(--nm-light), 4px 4px 8px var(--nm-dark)}
+  .swatch[aria-checked="true"]{box-shadow:0 0 0 2px var(--nm-bg), 0 0 0 4px var(--c)}
+  .swatch-name{font-size:.75rem;color:var(--nm-text2);margin-top:8px}
+  .bm-note{font-size:.68rem;color:var(--nm-text3);padding:10px 0 12px;border-top:1px solid var(--nm-line)}
 
   /* ---- pannello filtri: <details> nativo, compatto, si apre/chiude con un click ---- */
   .filters{background:var(--nm-bg);border-radius:20px;padding:4px 20px;margin-bottom:16px;border:1px solid var(--nm-border);
@@ -196,11 +227,41 @@
 <body>
 <div class="app">
   <div class="topbar">
-    <div><h1 data-i18n="app_name">Scout</h1><small id="sub">caricamento…</small></div>
+    <div class="brand-id">
+      <img class="club-logo" id="clubLogo" alt="" hidden />
+      <div><h1 data-i18n="app_name">Scout</h1><small id="sub">caricamento…</small></div>
+    </div>
     <div class="topbar-actions">
       <button id="btnDash" class="dash-toggle" data-i18n="nav_dashboard">Dashboard</button>
       <button id="btnReport" data-i18n="nav_report">Report scouting</button>
       <button id="btnCsv" data-i18n="nav_csv">Esporta CSV</button>
+      <div class="brand-wrap">
+        <button id="btnBrand" aria-expanded="false" aria-controls="brandMenu" data-i18n="btn_brand">Personalizza</button>
+        <div class="brand-menu" id="brandMenu" hidden>
+          <div class="bm-sec">
+            <span class="bm-label" data-i18n="brand_logo">Logo società</span>
+            <div class="bm-logo">
+              <div class="bm-logo-prev" id="bmLogoPrev"></div>
+              <div class="bm-logo-btns">
+                <button type="button" id="bmLogoBtn"></button>
+                <button type="button" class="bm-link" id="bmLogoDel" data-i18n="brand_logo_remove">Rimuovi</button>
+              </div>
+              <input type="file" id="bmLogoFile" accept="image/*" hidden />
+            </div>
+          </div>
+          <div class="bm-sec">
+            <label class="bm-label" for="bmCoach" data-i18n="brand_coach">Firma allenatore</label>
+            <input type="text" id="bmCoach" maxlength="60" autocomplete="name" data-i18n-ph="brand_coach_ph" placeholder="Nome e cognome" />
+            <div class="bm-hint" data-i18n="brand_coach_hint">Compare in fondo a ogni pagina del PDF</div>
+          </div>
+          <div class="bm-sec">
+            <span class="bm-label" id="bmColorLbl" data-i18n="brand_color">Colore squadra</span>
+            <div class="swatches" id="bmSwatches" role="radiogroup" aria-labelledby="bmColorLbl"></div>
+            <div class="swatch-name" id="bmSwatchName"></div>
+          </div>
+          <div class="bm-note" data-i18n="brand_note">Logo, firma e colore restano salvati in questo browser.</div>
+        </div>
+      </div>
       <button id="btnLang" title="Switch language / Cambia lingua">EN</button>
     </div>
   </div>
@@ -291,10 +352,10 @@
   <div class="panel" id="panel" role="dialog" aria-modal="true"><button class="x" id="btnX" data-i18n="btn_close">Chiudi</button><div id="detail"></div></div>
 </div>
 
-<script src="i18n.js?v=20261021"></script>
-<script src="giocatori.js?v=20261021"></script>
-<script src="charts.js?v=20261021"></script>
-<script src="scouting_report.js?v=20261021"></script>
+<script src="i18n.js?v=20261021b"></script>
+<script src="giocatori.js?v=20261021b"></script>
+<script src="charts.js?v=20261021b"></script>
+<script src="scouting_report.js?v=20261021b"></script>
 <script>
 const $ = id => document.getElementById(id);
 const RUOLI = { GK: I18N.t('role_GK'), DF: I18N.t('role_DF'), MF: I18N.t('role_MF'), FW: I18N.t('role_FW') };
@@ -339,6 +400,53 @@ function ripristinaFiltri(){
   if (p.dashOpen === false) dashOpen = false;
 }
 
+// ---- Personalizza: logo società, firma allenatore, colore squadra (dati in branding.js) ----
+function renderBrand(){
+  const b = Brand.get(), lang = I18N.getLang();
+  $('clubLogo').hidden = !b.logo;
+  if (b.logo) $('clubLogo').src = b.logo; else $('clubLogo').removeAttribute('src');
+  $('bmLogoPrev').innerHTML = b.logo ? `<img src="${b.logo}" alt="">` : esc(I18N.t('brand_logo_none'));
+  $('bmLogoBtn').textContent = I18N.t(b.logo ? 'brand_logo_change' : 'brand_logo_upload');
+  $('bmLogoDel').hidden = !b.logo;
+  if (document.activeElement !== $('bmCoach')) $('bmCoach').value = b.coach;
+  $('bmSwatches').innerHTML = Brand.COLORS.map(c=>
+    `<button type="button" class="swatch" role="radio" style="--c:${c.hex}" data-hex="${c.hex}"
+       aria-checked="${c.hex===b.accent}" aria-label="${esc(c[lang]||c.it)}" title="${esc(c[lang]||c.it)}"
+       tabindex="${c.hex===b.accent?0:-1}"></button>`).join('');
+  const cur = Brand.COLORS.find(c=>c.hex===b.accent);
+  $('bmSwatchName').textContent = cur ? (cur[lang]||cur.it) : '';
+}
+function wireBrand(){
+  const menu = $('brandMenu'), btn = $('btnBrand');
+  const apri = on=>{ menu.hidden = !on; btn.setAttribute('aria-expanded', on); btn.classList.toggle('primary', on); };
+  btn.addEventListener('click', e=>{ e.stopPropagation(); apri(menu.hidden); });
+  document.addEventListener('click', e=>{ if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) apri(false); });
+  document.addEventListener('keydown', e=>{ if (e.key==='Escape' && !menu.hidden){ apri(false); btn.focus(); } });
+
+  $('bmLogoBtn').addEventListener('click', ()=> $('bmLogoFile').click());
+  $('bmLogoFile').addEventListener('change', e=>{
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    Brand.setLogo(f).then(ok=>{ if (!ok) alert(I18N.t('brand_logo_big')); })
+                    .catch(()=> alert(I18N.t('brand_logo_err')));
+  });
+  $('bmLogoDel').addEventListener('click', ()=> Brand.removeLogo());
+  $('bmCoach').addEventListener('input', debounce(()=> Brand.setCoach($('bmCoach').value), 300));
+  $('bmCoach').addEventListener('change', ()=> Brand.setCoach($('bmCoach').value));
+
+  const sw = $('bmSwatches');
+  sw.addEventListener('click', e=>{ const b = e.target.closest('.swatch'); if (b){ Brand.setAccent(b.dataset.hex); sw.querySelector(`[data-hex="${b.dataset.hex}"]`).focus(); } });
+  sw.addEventListener('keydown', e=>{   // frecce per scorrere i colori, come un normale gruppo di scelte
+    const d = {ArrowRight:1, ArrowDown:1, ArrowLeft:-1, ArrowUp:-1}[e.key]; if (!d) return;
+    e.preventDefault();
+    const list = Brand.COLORS.map(c=>c.hex), i = list.indexOf(Brand.get().accent);
+    const hex = list[(i + d + list.length) % list.length];
+    Brand.setAccent(hex); sw.querySelector(`[data-hex="${hex}"]`).focus();
+  });
+  window.addEventListener('brandChanged', renderBrand);
+  renderBrand();
+}
+
 function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; }
 
 // ---- init ----------------------------------------------------------------
@@ -368,6 +476,7 @@ function init(){
   });
   ripristinaFiltri();
   wire();
+  wireBrand();
   $('dash').style.display = dashOpen ? '' : 'none';
   $('btnDash').classList.toggle('primary', dashOpen);
   applica();

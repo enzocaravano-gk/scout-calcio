@@ -33,6 +33,12 @@
       stats_su: 'giocatori su',
       stats_mostrati: 'mostrati i primi {n} di {tot} — restringi i filtri',
       btn_more: 'Mostra altri {n}',
+      btn_brand: 'Personalizza',
+      brand_logo: 'Logo società', brand_logo_upload: 'Carica logo', brand_logo_change: 'Cambia logo', brand_logo_remove: 'Rimuovi',
+      brand_logo_none: 'Nessun logo caricato', brand_logo_err: 'Il file scelto non è un\'immagine valida.',
+      brand_logo_big: 'Logo troppo grande per il salvataggio automatico. Verrà mantenuto solo per questa sessione.',
+      brand_coach: 'Firma allenatore', brand_coach_ph: 'Nome e cognome', brand_coach_hint: 'Compare in fondo a ogni pagina del PDF',
+      brand_color: 'Colore squadra', brand_note: 'Logo, firma e colore restano salvati in questo browser.',
 
       // ---- tabella ----
       th_nome: 'Nome', th_ruolo: 'Ruolo', th_squadra: 'Squadra', th_camp: 'Camp.',
@@ -148,6 +154,12 @@
       stats_su: 'players out of',
       stats_mostrati: 'showing first {n} of {tot} — narrow your filters',
       btn_more: 'Show {n} more',
+      btn_brand: 'Customize',
+      brand_logo: 'Club logo', brand_logo_upload: 'Upload logo', brand_logo_change: 'Change logo', brand_logo_remove: 'Remove',
+      brand_logo_none: 'No logo uploaded', brand_logo_err: 'The selected file is not a valid image.',
+      brand_logo_big: 'Logo too large to be saved automatically. It will be kept for this session only.',
+      brand_coach: 'Coach signature', brand_coach_ph: 'First and last name', brand_coach_hint: 'Shown at the bottom of every PDF page',
+      brand_color: 'Team colour', brand_note: 'Logo, signature and colour are saved in this browser.',
 
       th_nome: 'Name', th_ruolo: 'Role', th_squadra: 'Club', th_camp: 'League',
       th_eta: 'Age', th_valore: 'Value €M', th_elo: 'Elo', th_gol: 'Goals', th_scadenza: 'Expiry',

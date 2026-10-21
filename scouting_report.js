@@ -417,9 +417,13 @@
       const bag = inp.dataset.bag, id = inp.dataset.id;
       rep[bag] = rep[bag] || {};
       if (rep[bag][id] == null) rep[bag][id] = Number(inp.value);
+      // --p = percentuale riempita della barra (1 → 0%, 10 → 100%), usata dal CSS per colorare la parte "piena"
+      const fill = () => inp.style.setProperty('--p', ((inp.value - 1) / 9 * 100) + '%');
+      fill();
       inp.addEventListener('input', () => {
         rep[bag][id] = Number(inp.value);
         body.querySelector(`[data-out="${bag}_${id}"]`).textContent = inp.value;
+        fill();
       });
     });
     // campi data GG/MM/AAAA con avanzamento automatico
@@ -647,7 +651,7 @@
       .sr-sec{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--nm-text2,#9aa1ab);font-weight:600;margin:18px 0 8px;border-top:1px solid var(--nm-line,rgba(255,255,255,.06));padding-top:12px}
       .sr-sec small{color:var(--nm-text3,#6b7079);text-transform:none;letter-spacing:0}
       .sr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 14px}
-      .sr-grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 18px}
+      .sr-grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px 28px}
       .sr-f{display:flex;flex-direction:column;gap:3px}.sr-f.full{margin-top:10px}
       .sr-f span{font-size:.7rem;text-transform:uppercase;letter-spacing:.03em;color:var(--nm-text2,#9aa1ab)}
       .sr-f input,.sr-f textarea{background:var(--nm-bg,#242830);border:1px solid var(--nm-border,rgba(255,255,255,.04));color:var(--nm-text,#eef1f5);
@@ -659,8 +663,21 @@
       .sr-date input{text-align:center;font-variant-numeric:tabular-nums;padding:7px 4px}
       .sr-date-d,.sr-date-m{width:42px;flex:0 0 42px}
       .sr-date-y{width:64px;flex:0 0 64px}
-      .sr-sl{display:flex;align-items:center;gap:10px;font-size:.8rem;color:var(--nm-text2,#9aa1ab);padding:3px 0}
-      .sr-sl span{flex:0 0 130px}.sr-sl input{flex:1}.sr-sl b{flex:0 0 22px;text-align:right;color:var(--gold,#e8b84b);font-variant-numeric:tabular-nums}
+      .sr-sl{display:flex;align-items:center;gap:14px;font-size:.88rem;color:var(--nm-text2,#262c36);padding:6px 0;cursor:pointer}
+      .sr-sl span{flex:0 0 140px;font-weight:500}
+      .sr-sl b{flex:0 0 30px;text-align:right;color:var(--gold,#7a4c00);font-size:1.15rem;font-weight:700;font-variant-numeric:tabular-nums}
+      /* barra valore grande: binario incassato con parte piena colorata, cursore in rilievo */
+      .sr-sl input[type=range]{flex:1;min-width:0;padding:0;margin:0;-webkit-appearance:none;appearance:none;height:14px;border-radius:7px;cursor:pointer;
+        border:1px solid var(--nm-border,rgba(10,14,22,.26));
+        background:linear-gradient(90deg,var(--gold,#7a4c00) 0 var(--p,50%),transparent var(--p,50%)) var(--nm-bg,#e8ebf0);
+        box-shadow:inset -2px -2px 4px var(--nm-light,#fff), inset 2px 2px 4px var(--nm-dark,#b3bbc7)}
+      .sr-sl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;border-radius:50%;
+        background:var(--nm-bg,#e8ebf0);border:2px solid var(--gold,#7a4c00);
+        box-shadow:-3px -3px 6px var(--nm-light,#fff), 3px 3px 6px var(--nm-dark,#b3bbc7)}
+      .sr-sl input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;
+        background:var(--nm-bg,#e8ebf0);border:2px solid var(--gold,#7a4c00);
+        box-shadow:-3px -3px 6px var(--nm-light,#fff), 3px 3px 6px var(--nm-dark,#b3bbc7)}
+      .sr-sl input[type=range]:focus-visible{outline:2px solid var(--gold,#7a4c00);outline-offset:4px}
       .sr-consi-row{display:flex;flex-wrap:wrap;gap:8px}
       .sr-consi{font-size:.82rem}
       .sr-consi.on{color:var(--gold,#e8b84b);font-weight:700;border-color:var(--gold,#e8b84b);

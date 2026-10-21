@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-<script src="branding.js?v=20261021b"></script>
+<script src="branding.js?v=20261022a"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   /* ---- Neumorphism applicato a tutta l'app: ogni elemento condivide il
@@ -71,7 +71,7 @@
 
   /* ---- menu Personalizza (logo, firma, colore): pannello neumorfico a tendina ---- */
   .brand-wrap{position:relative}
-  .brand-menu{position:absolute;top:calc(100% + 12px);right:0;z-index:90;width:332px;max-width:calc(100vw - 32px);
+  .brand-menu{position:absolute;top:calc(100% + 12px);right:0;z-index:90;width:332px;max-width:calc(100vw - 32px);max-height:calc(100vh - 130px);overflow-y:auto;
     background:var(--nm-bg);border:1px solid var(--nm-border);border-radius:18px;padding:6px 18px;
     box-shadow:-8px -8px 16px var(--nm-light), 8px 8px 16px var(--nm-dark), var(--elev)}
   .brand-menu[hidden]{display:none}
@@ -94,6 +94,14 @@
   .swatch:hover{box-shadow:-4px -4px 8px var(--nm-light), 4px 4px 8px var(--nm-dark)}
   .swatch[aria-checked="true"]{box-shadow:0 0 0 2px var(--nm-bg), 0 0 0 4px var(--c)}
   .swatch-name{font-size:.75rem;color:var(--nm-text2);margin-top:8px}
+  .bm-status{font-size:.78rem;color:var(--nm-text2);line-height:1.45}
+  .bm-status b{color:var(--nm-text)}
+  .bm-status.warn{color:var(--red)}
+  .bm-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+  .bm-row button{padding:6px 12px;font-size:.78rem}
+  .bm-row .bm-link{color:var(--nm-text2)}
+  .fs-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;background:var(--nm-text3)}
+  .fs-dot.on{background:var(--green)}.fs-dot.warn{background:var(--red)}
   .bm-note{font-size:.68rem;color:var(--nm-text3);padding:10px 0 12px;border-top:1px solid var(--nm-line)}
 
   /* ---- pannello filtri: <details> nativo, compatto, si apre/chiude con un click ---- */
@@ -235,6 +243,7 @@
       <button id="btnDash" class="dash-toggle" data-i18n="nav_dashboard">Dashboard</button>
       <button id="btnReport" data-i18n="nav_report">Report scouting</button>
       <button id="btnCsv" data-i18n="nav_csv">Esporta CSV</button>
+      <button id="btnFolder" class="primary" hidden data-i18n="fs_reconnect">Ricollega cartella</button>
       <div class="brand-wrap">
         <button id="btnBrand" aria-expanded="false" aria-controls="brandMenu" data-i18n="btn_brand">Personalizza</button>
         <div class="brand-menu" id="brandMenu" hidden>
@@ -258,6 +267,16 @@
             <span class="bm-label" id="bmColorLbl" data-i18n="brand_color">Colore squadra</span>
             <div class="swatches" id="bmSwatches" role="radiogroup" aria-labelledby="bmColorLbl"></div>
             <div class="swatch-name" id="bmSwatchName"></div>
+          </div>
+          <div class="bm-sec">
+            <span class="bm-label" data-i18n="fs_title">Cartella dati (report)</span>
+            <div class="bm-status" id="fsStatus"></div>
+            <div class="bm-row" id="fsBtns"></div>
+            <div class="bm-row">
+              <button type="button" class="bm-link" id="fsExport" data-i18n="fs_export">Esporta backup</button>
+              <button type="button" class="bm-link" id="fsImport" data-i18n="fs_import">Importa backup</button>
+              <input type="file" id="fsImportFile" accept=".json,application/json" hidden />
+            </div>
           </div>
           <div class="bm-note" data-i18n="brand_note">Logo, firma e colore restano salvati in questo browser.</div>
         </div>
@@ -352,10 +371,11 @@
   <div class="panel" id="panel" role="dialog" aria-modal="true"><button class="x" id="btnX" data-i18n="btn_close">Chiudi</button><div id="detail"></div></div>
 </div>
 
-<script src="i18n.js?v=20261021b"></script>
-<script src="giocatori.js?v=20261021b"></script>
-<script src="charts.js?v=20261021b"></script>
-<script src="scouting_report.js?v=20261021b"></script>
+<script src="i18n.js?v=20261022a"></script>
+<script src="giocatori.js?v=20261022a"></script>
+<script src="charts.js?v=20261022a"></script>
+<script src="scouting_report.js?v=20261022a"></script>
+<script src="folder_sync.js?v=20261022a"></script>
 <script>
 const $ = id => document.getElementById(id);
 const RUOLI = { GK: I18N.t('role_GK'), DF: I18N.t('role_DF'), MF: I18N.t('role_MF'), FW: I18N.t('role_FW') };
@@ -420,7 +440,8 @@ function wireBrand(){
   const menu = $('brandMenu'), btn = $('btnBrand');
   const apri = on=>{ menu.hidden = !on; btn.setAttribute('aria-expanded', on); btn.classList.toggle('primary', on); };
   btn.addEventListener('click', e=>{ e.stopPropagation(); apri(menu.hidden); });
-  document.addEventListener('click', e=>{ if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) apri(false); });
+  // composedPath: funziona anche se il pulsante cliccato viene ridisegnato subito dopo il click
+  document.addEventListener('click', e=>{ if (!menu.hidden && !e.composedPath().includes(menu) && e.target !== btn) apri(false); });
   document.addEventListener('keydown', e=>{ if (e.key==='Escape' && !menu.hidden){ apri(false); btn.focus(); } });
 
   $('bmLogoBtn').addEventListener('click', ()=> $('bmLogoFile').click());
@@ -445,6 +466,58 @@ function wireBrand(){
   });
   window.addEventListener('brandChanged', renderBrand);
   renderBrand();
+}
+
+// ---- Cartella dati: report salvati come file sul proprio dispositivo (folder_sync.js) ----
+function renderFolder(){
+  const st = FolderSync.state(), t = I18N.t;
+  const nome = esc(st.name || '');
+  let html, btns = '';
+  if (!st.supported) html = esc(t('fs_unsupported'));
+  else if (st.status === 'connected'){
+    const ora = st.lastSync ? st.lastSync.toLocaleTimeString(I18N.getLang()==='it'?'it-IT':'en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+    html = `<span class="fs-dot on"></span>${t('fs_connected',{name:`<b>${nome}</b>`, n: st.count})}` + (ora ? `<br><span class="dim">${esc(t('fs_last',{t:ora}))}</span>` : '');
+    btns = `<button type="button" data-fs="sync">${esc(t('fs_sync_now'))}</button><button type="button" data-fs="connect">${esc(t('fs_change'))}</button><button type="button" class="bm-link" data-fs="disconnect">${esc(t('fs_disconnect'))}</button>`;
+  } else if (st.status === 'need-permission'){
+    html = `<span class="fs-dot warn"></span>${t('fs_need',{name:`<b>${nome}</b>`})}`;
+    btns = `<button type="button" class="primary" data-fs="reconnect">${esc(t('fs_reconnect'))}</button><button type="button" class="bm-link" data-fs="disconnect">${esc(t('fs_disconnect'))}</button>`;
+  } else if (st.status === 'error'){
+    html = `<span class="fs-dot warn"></span>${t('fs_err',{name:`<b>${nome}</b>`})}`;
+    btns = `<button type="button" class="primary" data-fs="connect">${esc(t('fs_choose'))}</button><button type="button" class="bm-link" data-fs="disconnect">${esc(t('fs_disconnect'))}</button>`;
+  } else {
+    html = `<span class="fs-dot"></span>${esc(t('fs_none'))}`;
+    btns = `<button type="button" class="primary" data-fs="connect">${esc(t('fs_choose'))}</button>`;
+  }
+  $('fsStatus').innerHTML = html;
+  $('fsStatus').classList.toggle('warn', st.status === 'need-permission' || st.status === 'error');
+  $('fsBtns').innerHTML = btns;
+  $('fsBtns').hidden = !btns;
+  // in alto, ben visibile, solo quando serve un click per ridare il permesso
+  $('btnFolder').hidden = st.status !== 'need-permission';
+}
+function wireFolder(){
+  if (!window.FolderSync) return;
+  $('fsBtns').addEventListener('click', e=>{
+    const a = e.target.closest('[data-fs]'); if (!a) return;
+    const act = a.dataset.fs;
+    if (act === 'disconnect' && !confirm(I18N.t('fs_confirm_disc'))) return;
+    FolderSync[act]();
+  });
+  $('btnFolder').addEventListener('click', ()=> FolderSync.reconnect());
+  $('fsExport').addEventListener('click', ()=>{
+    if (!window.ScoutReport._store.all().length) { alert(I18N.t('fs_export_none')); return; }
+    FolderSync.exportBackup();
+  });
+  $('fsImport').addEventListener('click', ()=> $('fsImportFile').click());
+  $('fsImportFile').addEventListener('change', e=>{
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    FolderSync.importBackup(f)
+      .then(r=> alert(I18N.t('fs_import_ok',{a:r.added, u:r.updated})))
+      .catch(()=> alert(I18N.t('fs_import_err')));
+  });
+  window.addEventListener('folderStateChanged', renderFolder);
+  renderFolder();
 }
 
 function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; }
@@ -477,6 +550,7 @@ function init(){
   ripristinaFiltri();
   wire();
   wireBrand();
+  wireFolder();
   $('dash').style.display = dashOpen ? '' : 'none';
   $('btnDash').classList.toggle('primary', dashOpen);
   applica();

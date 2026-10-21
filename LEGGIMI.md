@@ -112,6 +112,38 @@ In alto a destra il pulsante **"Personalizza"** apre un piccolo pannello con:
 Come i report, anche logo, firma e colore restano salvati **solo nel browser** di chi
 li imposta: ogni collaboratore può avere i suoi.
 
+## Cartella dati: i report salvati sul tuo dispositivo
+
+Normalmente i report restano salvati solo nel browser. Puoi invece collegare una
+**cartella del tuo computer** (es. `Documenti/Scout dati`): da quel momento ogni report
+viene salvato lì come file, e l'app attinge da lì automaticamente.
+
+**Come si fa:** Personalizza → Cartella dati → **"Scegli cartella"** → scegli o crea
+la cartella → consenti l'accesso. Solo la prima volta.
+
+- Ogni valutazione è un file `.json` con un nome leggibile, es.
+  `Rossi-Mario_2026-10-01_r1abc.json`.
+- All'apertura dell'app, e ogni volta che torni sulla sua scheda del browser, la
+  cartella viene riletta da sola:
+  - un file **copiato dentro** (anche ricevuto da un collega) compare nell'app;
+  - un file **cancellato** dalla cartella sparisce anche dall'app.
+- I report scritti prima di collegare la cartella vengono copiati dentro, nessuno si perde.
+- Se a una nuova apertura il browser chiede di nuovo il permesso, in alto compare il
+  pulsante **"Ricollega cartella"**: basta un click. Chrome propone anche
+  "Consenti a ogni visita", che evita di chiederlo ogni volta.
+- Quello che fai nel frattempo (nuovi report, eliminazioni) viene riportato nella
+  cartella al momento in cui la ricolleghi.
+- Nulla viene caricato online: i file restano solo sul tuo dispositivo. Per averli al
+  sicuro anche altrove, puoi scegliere una cartella sincronizzata (iCloud Drive,
+  Google Drive, Dropbox).
+
+**Browser:** il collegamento alla cartella funziona su **Chrome, Edge, Brave e Opera da
+computer**. Safari, Firefox, iPhone e iPad non lo permettono. Lì (e ovunque) restano:
+
+- **Esporta backup**: scarica un unico file con tutti i report;
+- **Importa backup**: lo ricarica, unendo senza cancellare nulla. Accetta anche un
+  singolo report `.json` ricevuto da un collega.
+
 ## Cambio lingua (Italiano / English)
 
 In alto a destra c'è il pulsante **"EN"** (o **"IT"** se sei già in inglese).
@@ -144,6 +176,7 @@ Il **PDF generato** resta con l'intestazione e le etichette di sezione in italia
 - `charts.js` → la libreria di grafici SVG usata dalla Dashboard
 - `i18n.js` → il dizionario Italiano/English
 - `branding.js` → logo, firma allenatore e colore squadra (menu "Personalizza")
+- `folder_sync.js` → cartella dati sul dispositivo e backup dei report
 
 ## E la Serie C?
 

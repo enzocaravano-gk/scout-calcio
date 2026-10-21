@@ -80,17 +80,30 @@
   // così il chip "Dataset" può aggiornarsi da solo senza bisogno di ricaricare
   function notifyChange() { try { window.dispatchEvent(new CustomEvent('scoutReportsChanged')); } catch (e) {} }
 
+  // hooks: folder_sync.js si registra qui per copiare ogni salvataggio/eliminazione
+  // anche nella cartella del dispositivo (se collegata)
+  const hooks = { save: [], remove: [] };
   const Store = {
     all() { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } },
     save(rep) {
       const list = Store.all();
+      rep.updated_at = new Date().toISOString();   // serve alla sincronizzazione per capire quale copia è più recente
       if (rep.id) { const i = list.findIndex(r => r.id === rep.id); if (i >= 0) list[i] = rep; else list.push(rep); }
       else { rep.id = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); list.push(rep); }
       localStorage.setItem(KEY, JSON.stringify(list));
+      hooks.save.forEach(fn => { try { fn(rep); } catch (e) {} });
       notifyChange();
       return rep;
     },
-    remove(id) { localStorage.setItem(KEY, JSON.stringify(Store.all().filter(r => r.id !== id))); notifyChange(); },
+    remove(id) {
+      localStorage.setItem(KEY, JSON.stringify(Store.all().filter(r => r.id !== id)));
+      hooks.remove.forEach(fn => { try { fn(id); } catch (e) {} });
+      notifyChange();
+    },
+    // sostituisce tutto l'archivio (usato dalla sincronizzazione con la cartella): niente hooks
+    replaceAll(list) { localStorage.setItem(KEY, JSON.stringify(list)); notifyChange(); },
+    onSave(fn) { hooks.save.push(fn); },
+    onRemove(fn) { hooks.remove.push(fn); },
     sessionsOf(rep) {
       const k = `${rep.nome} ${rep.cognome}`.trim().toLowerCase();
       return Store.all().filter(r => `${r.nome} ${r.cognome}`.trim().toLowerCase() === k);

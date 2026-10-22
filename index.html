@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Scout Calcio — Serie A / B</title>
 <!-- caratteri locali: nessuna richiesta a Google Fonts (privacy: l'IP degli utenti non va a terzi) -->
-<link href="fonts/fonts.css?v=20261022b" rel="stylesheet" />
+<link href="fonts/fonts.css?v=20261022c" rel="stylesheet" />
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#e8ebf0" />
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-<script src="branding.js?v=20261022b"></script>
+<script src="branding.js?v=20261022c"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   /* ---- Neumorphism applicato a tutta l'app: ogni elemento condivide il
@@ -384,11 +384,11 @@
   <div class="panel" id="panel" role="dialog" aria-modal="true"><button class="x" id="btnX" data-i18n="btn_close">Chiudi</button><div id="detail"></div></div>
 </div>
 
-<script src="i18n.js?v=20261022b"></script>
-<script src="giocatori.js?v=20261022b"></script>
-<script src="charts.js?v=20261022b"></script>
-<script src="scouting_report.js?v=20261022b"></script>
-<script src="folder_sync.js?v=20261022b"></script>
+<script src="i18n.js?v=20261022c"></script>
+<script src="giocatori.js?v=20261022c"></script>
+<script src="charts.js?v=20261022c"></script>
+<script src="scouting_report.js?v=20261022c"></script>
+<script src="folder_sync.js?v=20261022c"></script>
 <script>
 const $ = id => document.getElementById(id);
 const RUOLI = { GK: I18N.t('role_GK'), DF: I18N.t('role_DF'), MF: I18N.t('role_MF'), FW: I18N.t('role_FW') };
@@ -641,6 +641,11 @@ function wire(){
   $('overlay').addEventListener('click', e=>{ if(e.target===$('overlay')) chiudi(); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('overlay').classList.contains('open')) chiudi(); });
 
+  // cambio lingua: si salva la scelta e si ricarica, così tutto (anche il modulo report) si ridisegna nella nuova lingua
+  $('btnLang').addEventListener('click', ()=>{
+    I18N.setLang(I18N.getLang() === 'it' ? 'en' : 'it');
+    location.reload();
+  });
 }
 
 // ---- filtro --------------------------------------------------------------

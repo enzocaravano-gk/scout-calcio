@@ -809,5 +809,39 @@ h1,h2,h3,h4{font-family:"Space Grotesk",sans-serif;font-weight:600;margin:0}
 `;
 
   // ---- API pubblica ---------------------------------------------------------
-  window.ScoutReport = { openForm, openList, openView, _store: Store, _buildHTML: buildScoutingReportHTML };
+  // ---- dati per l'export CSV -------------------------------------------------
+  // raggruppa i report per giocatore (nome + cognome, minuscolo, spazi normalizzati: è lo stesso
+  // nome con cui il report viene creato dalla scheda del giocatore) e restituisce tutte le sessioni,
+  // dalla più recente
+  const playerKey = s => (s || '').toString().trim().replace(/\s+/g, ' ').toLowerCase();
+  function reportsByPlayer() {
+    const map = new Map();
+    Store.all().forEach(r => {
+      const k = playerKey(`${r.nome || ''} ${r.cognome || ''}`);
+      if (!k) return;
+      if (!map.has(k)) map.set(k, []);
+      map.get(k).push(r);
+    });
+    map.forEach(list => list.sort((a, b) =>
+      new Date(b.data_osservazione || b.created_at || '').getTime() - new Date(a.data_osservazione || a.created_at || '').getTime()));
+    return map;
+  }
+  // tutti gli attributi valutabili (movimento + portiere), con il gruppo di appartenenza
+  function attributeColumns() {
+    return [
+      ...ATTRS_TEC.map(a => ({ bag: 'attr_tecnici', id: a.id, group: 'tec', lab: a.lab })),
+      ...ATTRS_FM.map(a => ({ bag: 'attr_fisico_mentale', id: a.id, group: 'fm', lab: a.lab })),
+      ...ATTRS_TEC_GK.map(a => ({ bag: 'attr_tecnici', id: a.id, group: 'gk_tec', lab: a.lab })),
+      ...ATTRS_FM_GK.map(a => ({ bag: 'attr_fisico_mentale', id: a.id, group: 'gk_fm', lab: a.lab })),
+    ];
+  }
+  // medie e giudizio di una sessione, calcolati come nella scheda
+  function sessionSummary(r) {
+    const a = attrsForScheda(r.attr_tecnici, r.attr_fisico_mentale);
+    const mT = mediaGruppo(r.attr_tecnici, a.tec), mF = mediaGruppo(r.attr_fisico_mentale, a.fm);
+    return { mediaTec: mT, mediaFm: mF, mediaGlob: (mT + mF) / 2, giudizio: CONSI_LABELS[r.considerazione] ?? '' };
+  }
+
+  window.ScoutReport = { openForm, openList, openView, _store: Store, _buildHTML: buildScoutingReportHTML,
+    playerKey, reportsByPlayer, attributeColumns, sessionSummary };
 })();

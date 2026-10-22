@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Scout Calcio — Serie A / B</title>
 <!-- caratteri locali: nessuna richiesta a Google Fonts (privacy: l'IP degli utenti non va a terzi) -->
-<link href="fonts/fonts.css?v=20261022a" rel="stylesheet" />
+<link href="fonts/fonts.css?v=20261022b" rel="stylesheet" />
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#e8ebf0" />
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-<script src="branding.js?v=20261022a"></script>
+<script src="branding.js?v=20261022b"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   /* ---- Neumorphism applicato a tutta l'app: ogni elemento condivide il
@@ -384,11 +384,11 @@
   <div class="panel" id="panel" role="dialog" aria-modal="true"><button class="x" id="btnX" data-i18n="btn_close">Chiudi</button><div id="detail"></div></div>
 </div>
 
-<script src="i18n.js?v=20261022a"></script>
-<script src="giocatori.js?v=20261022a"></script>
-<script src="charts.js?v=20261022a"></script>
-<script src="scouting_report.js?v=20261022a"></script>
-<script src="folder_sync.js?v=20261022a"></script>
+<script src="i18n.js?v=20261022b"></script>
+<script src="giocatori.js?v=20261022b"></script>
+<script src="charts.js?v=20261022b"></script>
+<script src="scouting_report.js?v=20261022b"></script>
+<script src="folder_sync.js?v=20261022b"></script>
 <script>
 const $ = id => document.getElementById(id);
 const RUOLI = { GK: I18N.t('role_GK'), DF: I18N.t('role_DF'), MF: I18N.t('role_MF'), FW: I18N.t('role_FW') };
@@ -972,15 +972,66 @@ function chiudi(){
 }
 
 // ---- export --------------------------------------------------------------
+// Una riga per giocatore filtrato: anagrafica completa, statistiche del database e, se esiste,
+// l'ultima valutazione scouting con medie, giudizio e TUTTI i voti tecnici e fisico/mentali
+// (colonne per giocatori di movimento e per portieri: si compilano quelle del caso).
+const CSV_H = {
+  it: { nome:'Giocatore', nascita:'Data di nascita', eta:'Età', naz:'Nazionalità', alt:'Altezza (cm)', peso:'Peso (kg)', piede:'Piede',
+        ruolo:'Ruolo', ruolo1:'Ruolo primario', ruolo2:'Ruolo secondario', squadra:'Squadra', camp:'Campionato', cat:'Categoria',
+        agente:'Agente', scad:'Scadenza contratto', valore:'Valore di mercato (€)', valStim:'Valore stimato scout',
+        elo:'Elo', rank:'Rank Elo', partite:'Presenze', gol:'Gol', assist:'Assist', minuti:'Minuti', fonti:'Fonti', tm:'Link Transfermarkt',
+        sess:'Sessioni di valutazione', data:'Data ultima osservazione', stagione:'Stagione', evento:'Evento', partita:'Partita',
+        avv:'Livello avversario', scout:'Scout', giudizio:'Giudizio', voto:'Voto scout', mTec:'Media tecnica', mFm:'Media fisico/mentale',
+        mGlob:'Media globale', note:'Note scout',
+        g_tec:'Tecnica', g_fm:'Fisico/Mentale', g_gk_tec:'Portiere tecnica', g_gk_fm:'Portiere fisico/mentale' },
+  en: { nome:'Player', nascita:'Date of birth', eta:'Age', naz:'Nationality', alt:'Height (cm)', peso:'Weight (kg)', piede:'Foot',
+        ruolo:'Role', ruolo1:'Primary role', ruolo2:'Secondary role', squadra:'Club', camp:'League', cat:'Category',
+        agente:'Agent', scad:'Contract expiry', valore:'Market value (€)', valStim:'Scout estimated value',
+        elo:'Elo', rank:'Elo rank', partite:'Appearances', gol:'Goals', assist:'Assists', minuti:'Minutes', fonti:'Sources', tm:'Transfermarkt link',
+        sess:'Evaluation sessions', data:'Last observation date', stagione:'Season', evento:'Event', partita:'Match',
+        avv:'Opponent level', scout:'Scout', giudizio:'Judgement', voto:'Scout rating', mTec:'Technical average', mFm:'Physical/mental average',
+        mGlob:'Overall average', note:'Scout notes',
+        g_tec:'Technical', g_fm:'Physical/Mental', g_gk_tec:'Goalkeeper technical', g_gk_fm:'Goalkeeper physical/mental' },
+};
 function esportaCSV(){
   if(!RIS.length){ alert(I18N.t('alert_no_export')); return; }
-  // separatore ";" e BOM UTF-8: Excel in italiano apre il file già diviso in colonne e con gli accenti corretti
+  const it = I18N.getLang() === 'it', H = CSV_H[it ? 'it' : 'en'];
+  const SR = window.ScoutReport;
+  const perGiocatore = SR.reportsByPlayer(), ATTR = SR.attributeColumns();
+  // numeri con la virgola in italiano: Excel li riconosce come numeri (con il punto 6.5 diventerebbe una data)
+  const num = (v, dec=0) => (v===null || v===undefined || v==='' || isNaN(v)) ? '' :
+    (dec ? Number(v).toFixed(dec) : String(Math.round(Number(v)))).replace('.', it ? ',' : '.');
+  const giorno = d => { if (!d) return ''; const t = new Date(d); return isNaN(t) ? d : t.toISOString().slice(0,10); };
+
+  const cols = [
+    [H.nome, (g)=>g.nome], [H.nascita, (g,r)=>giorno(g.data_nascita || r.data_nascita)], [H.eta, (g)=>num(g.eta)],
+    [H.naz, (g,r)=>g.nazionalita || r.nazionalita], [H.alt, (g,r)=>num(g.altezza || r.altezza)], [H.peso, (g,r)=>num(r.peso)],
+    [H.piede, (g,r)=>g.piede || r.piede], [H.ruolo, (g)=>RUOLI[g.ruolo] || ''], [H.ruolo1, (g,r)=>r.ruolo_primario || g.ruolo_dettaglio],
+    [H.ruolo2, (g,r)=>r.ruolo_secondario], [H.squadra, (g,r)=>g.squadra || r.squadra], [H.camp, (g)=>g.campionato],
+    [H.cat, (g,r)=>r.categoria], [H.agente, (g,r)=>r.agente], [H.scad, (g,r)=>g.scadenza || r.contratto],
+    [H.valore, (g)=>num(g.valore_eur)], [H.valStim, (g,r)=>r.valore_stimato],
+    [H.elo, (g)=>num(g.elo)], [H.rank, (g)=>num(g.rank)], [H.partite, (g)=>num(g.partite)], [H.gol, (g)=>num(g.gol)],
+    [H.assist, (g)=>num(g.assist)], [H.minuti, (g)=>num(g.minuti)], [H.fonti, (g)=>(g.fonti||[]).join(' + ')], [H.tm, (g)=>g.url_tm],
+    [H.sess, (g,r,n)=>n ? n : ''], [H.data, (g,r)=>giorno(r.data_osservazione)], [H.stagione, (g,r)=>r.stagione], [H.evento, (g,r)=>r.evento],
+    [H.partita, (g,r)=>r.partita], [H.avv, (g,r)=>r.livello_avversario], [H.scout, (g,r)=>r.scout_cognome],
+    [H.giudizio, (g,r,n,m)=>m ? m.giudizio : ''], [H.voto, (g,r)=>num(r.voto_numerico, String(r.voto_numerico||'').includes('.') ? 1 : 0)],
+    [H.mTec, (g,r,n,m)=>m ? num(m.mediaTec,1) : ''], [H.mFm, (g,r,n,m)=>m ? num(m.mediaFm,1) : ''], [H.mGlob, (g,r,n,m)=>m ? num(m.mediaGlob,1) : ''],
+    ...ATTR.map(a=>[`${H['g_'+a.group]} - ${a.lab}`, (g,r)=>num(r[a.bag] && r[a.bag][a.id])]),
+    [H.note, (g,r)=>r.note_scout],
+  ];
+
+  // ";" come separatore e BOM UTF-8: Excel in italiano apre il file già in colonne e con gli accenti giusti.
+  // Testi che iniziano con = + - @ vengono neutralizzati: Excel li eseguirebbe come formule
+  // (i report possono arrivare anche da file di colleghi).
   const SEP = ';';
-  const H = I18N.t('csv_headers').split(',');
-  const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-  const body=RIS.map(g=>[g.nome,g.ruolo,g.squadra,g.campionato,g.eta,g.valore_eur,g.elo?Math.round(g.elo):'',g.rank,
-                         g.partite,g.gol,g.assist,g.scadenza,g.fonti.join('+')].map(q).join(SEP));
-  const csv='\uFEFF'+[H.map(q).join(SEP),...body].join('\r\n');
+  const q = v => { let t = String(v ?? ''); if (/^[=+\-@\t\r]/.test(t) && isNaN(t.replace(',', '.'))) t = "'" + t;
+                   return `"${t.replace(/"/g,'""')}"`; };
+  const body = RIS.map(g=>{
+    const sessioni = perGiocatore.get(SR.playerKey(g.nome)) || [];
+    const r = sessioni[0] || {}, m = sessioni[0] ? SR.sessionSummary(r) : null;
+    return cols.map(([,get])=>q(get(g, r, sessioni.length, m))).join(SEP);
+  });
+  const csv = '﻿' + [cols.map(([h])=>q(h)).join(SEP), ...body].join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   a.download=`scout_${new Date().toISOString().slice(0,10)}.csv`;

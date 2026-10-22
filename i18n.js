@@ -93,7 +93,6 @@
       detail_serieb_note: 'Serie B: dati solo PlayerElo (Elo/ranking). Valore di mercato e statistiche non disponibili gratuitamente.',
       anni: '{n} anni', cm: '{n} cm', piede_di: 'piede {p}',
       alert_no_export: 'Nessun risultato da esportare.',
-      csv_headers: 'Nome,Ruolo,Squadra,Campionato,Eta,Valore_EUR,Elo,Rank,Partite,Gol,Assist,Scadenza,Fonti',
 
       // ---- modulo report scouting: form ----
       sr_title_new: 'Nuovo report scouting', sr_title_edit: 'Modifica report',
@@ -224,7 +223,6 @@
       detail_serieb_note: 'Serie B: PlayerElo data only (Elo/ranking). Market value and statistics are not available for free.',
       anni: '{n} years old', cm: '{n} cm', piede_di: '{p} foot',
       alert_no_export: 'No results to export.',
-      csv_headers: 'Name,Role,Club,League,Age,Value_EUR,Elo,Rank,Appearances,Goals,Assists,Expiry,Sources',
 
       sr_title_new: 'New scouting report', sr_title_edit: 'Edit report',
       sr_gk_badge: 'Goalkeeper mode active — dedicated technical and physical attributes (detected from Primary role)',

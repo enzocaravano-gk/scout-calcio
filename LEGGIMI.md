@@ -186,8 +186,16 @@ Il **PDF generato** resta con l'intestazione e le etichette di sezione in italia
   giocatori per volta, con il pulsante **"Mostra altri"** per caricarne altri.
 - **Da tastiera**: Tab per spostarsi su chip, intestazioni e righe; Invio per
   attivare/aprire; frecce su/giù per scorrere le righe; Esc per chiudere la scheda.
-- **Esporta CSV**: il file si apre in Excel (italiano) già diviso in colonne e con
-  le lettere accentate corrette.
+- **Esporta CSV**: esporta i giocatori filtrati, uno per riga, con **tutti i dati**:
+  - anagrafica (nascita, età, nazionalità, altezza, peso, piede, ruoli, squadra,
+    categoria, agente, contratto, valori);
+  - statistiche del database (Elo, presenze, gol, assist, minuti, link Transfermarkt);
+  - se il giocatore ha report scouting, l'**ultima valutazione**: data, scout, giudizio,
+    voto, medie e **tutti i voti tecnici e fisico/mentali** (ci sono colonne separate
+    per i portieri), più il numero di sessioni e le note.
+
+  Il file si apre in Excel (italiano) già diviso in colonne, con accenti corretti e
+  decimali con la virgola.
 
 ## File nella cartella
 

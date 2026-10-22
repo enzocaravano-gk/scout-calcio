@@ -204,22 +204,34 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     return list.length;
   }
-  // accetta un backup ({report:[...]}), un elenco [...] o un singolo report;
   // unisce senza cancellare nulla: a parità di report tiene la versione più recente
-  async function importBackup(file) {
-    const data = JSON.parse(await file.text());
-    const incoming = (Array.isArray(data) ? data : Array.isArray(data && data.report) ? data.report : [data]).filter(isReport);
-    if (!incoming.length) throw new Error('empty');
+  async function importReports(incoming) {
+    incoming = incoming.filter(isReport);
     const s = store(), byId = new Map(s.all().map(r => [r.id, r]));
-    let added = 0, updated = 0;
+    let added = 0, updated = 0, same = 0;
     incoming.forEach(r => {
       const cur = byId.get(r.id);
       if (!cur) { byId.set(r.id, r); added++; }
       else if (stamp(r) > stamp(cur)) { byId.set(r.id, r); updated++; }
+      else same++;
     });
-    s.replaceAll([...byId.values()]);
+    if (added || updated) s.replaceAll([...byId.values()]);
     if (status === 'connected') await sync();   // e li scrive anche nella cartella
-    return { added, updated };
+    return { added, updated, same };
+  }
+  // accetta: backup ({report:[...]}), elenco [...], singolo report .json, oppure il CSV esportato da Scout
+  async function importBackup(file) {
+    const text = await file.text();
+    const isCsv = /\.csv$/i.test(file.name) || /^\uFEFF?"?[^{\[]/.test(text.trim());
+    if (isCsv) {
+      if (!window.ScoutCSV) throw new Error('csv');
+      const list = window.ScoutCSV.toReports(text);
+      return Object.assign(await importReports(list), { csv: true, found: list.length });
+    }
+    const data = JSON.parse(text);
+    const incoming = (Array.isArray(data) ? data : Array.isArray(data && data.report) ? data.report : [data]).filter(isReport);
+    if (!incoming.length) throw new Error('empty');
+    return importReports(incoming);
   }
 
   function state() {

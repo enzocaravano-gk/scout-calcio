@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Scout Calcio — Serie A / B</title>
 <!-- caratteri locali: nessuna richiesta a Google Fonts (privacy: l'IP degli utenti non va a terzi) -->
-<link href="fonts/fonts.css?v=20261022c" rel="stylesheet" />
+<link href="fonts/fonts.css?v=20261022d" rel="stylesheet" />
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#e8ebf0" />
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-<script src="branding.js?v=20261022c"></script>
+<script src="branding.js?v=20261022d"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   /* ---- Neumorphism applicato a tutta l'app: ogni elemento condivide il
@@ -283,8 +283,8 @@
             <div class="bm-row" id="fsBtns"></div>
             <div class="bm-row">
               <button type="button" class="bm-link" id="fsExport" data-i18n="fs_export">Esporta backup</button>
-              <button type="button" class="bm-link" id="fsImport" data-i18n="fs_import">Importa backup</button>
-              <input type="file" id="fsImportFile" accept=".json,application/json" hidden />
+              <button type="button" class="bm-link" id="fsImport" data-i18n="fs_import">Importa backup o CSV</button>
+              <input type="file" id="fsImportFile" accept=".json,.csv,application/json,text/csv" hidden />
             </div>
           </div>
           <div class="bm-note" data-i18n="brand_note">Logo, firma e colore restano salvati in questo browser.</div>
@@ -384,11 +384,11 @@
   <div class="panel" id="panel" role="dialog" aria-modal="true"><button class="x" id="btnX" data-i18n="btn_close">Chiudi</button><div id="detail"></div></div>
 </div>
 
-<script src="i18n.js?v=20261022c"></script>
-<script src="giocatori.js?v=20261022c"></script>
-<script src="charts.js?v=20261022c"></script>
-<script src="scouting_report.js?v=20261022c"></script>
-<script src="folder_sync.js?v=20261022c"></script>
+<script src="i18n.js?v=20261022d"></script>
+<script src="giocatori.js?v=20261022d"></script>
+<script src="charts.js?v=20261022d"></script>
+<script src="scouting_report.js?v=20261022d"></script>
+<script src="folder_sync.js?v=20261022d"></script>
 <script>
 const $ = id => document.getElementById(id);
 const RUOLI = { GK: I18N.t('role_GK'), DF: I18N.t('role_DF'), MF: I18N.t('role_MF'), FW: I18N.t('role_FW') };
@@ -526,7 +526,10 @@ function wireFolder(){
     const f = e.target.files[0]; e.target.value = '';
     if (!f) return;
     FolderSync.importBackup(f)
-      .then(r=> alert(I18N.t('fs_import_ok',{a:r.added, u:r.updated})))
+      .then(r=>{
+        if (r.csv) alert(r.found ? I18N.t('fs_import_csv_ok',{a:r.added + r.updated, s:r.same}) : I18N.t('fs_import_csv_none'));
+        else alert(I18N.t('fs_import_ok',{a:r.added, u:r.updated}));
+      })
       .catch(()=> alert(I18N.t('fs_import_err')));
   });
   window.addEventListener('folderStateChanged', renderFolder);
@@ -888,7 +891,11 @@ function getDatasetPlayers(){
     groups.get(key).push(r);
   });
   const out = [];
-  groups.forEach(list=>{
+  // i giocatori già presenti nel database (Serie A/B) restano lì: nel Dataset vanno solo quelli
+  // inseriti a mano, altrimenti un giocatore con un report comparirebbe due volte
+  const nelDatabase = new Set(TUTTI.map(g => ScoutReport.playerKey(g.nome)));
+  groups.forEach((list, key)=>{
+    if (nelDatabase.has(ScoutReport.playerKey(key))) return;
     list.sort((a,b)=> new Date(b.data_osservazione||b.created_at||'').getTime() - new Date(a.data_osservazione||a.created_at||'').getTime());
     const r = list[0];
     out.push({
@@ -987,7 +994,7 @@ const CSV_H = {
         elo:'Elo', rank:'Rank Elo', partite:'Presenze', gol:'Gol', assist:'Assist', minuti:'Minuti', fonti:'Fonti', tm:'Link Transfermarkt',
         sess:'Sessioni di valutazione', data:'Data ultima osservazione', stagione:'Stagione', evento:'Evento', partita:'Partita',
         avv:'Livello avversario', scout:'Scout', giudizio:'Giudizio', voto:'Voto scout', mTec:'Media tecnica', mFm:'Media fisico/mentale',
-        mGlob:'Media globale', note:'Note scout',
+        mGlob:'Media globale', note:'Note scout', idrep:'ID report',
         g_tec:'Tecnica', g_fm:'Fisico/Mentale', g_gk_tec:'Portiere tecnica', g_gk_fm:'Portiere fisico/mentale' },
   en: { nome:'Player', nascita:'Date of birth', eta:'Age', naz:'Nationality', alt:'Height (cm)', peso:'Weight (kg)', piede:'Foot',
         ruolo:'Role', ruolo1:'Primary role', ruolo2:'Secondary role', squadra:'Club', camp:'League', cat:'Category',
@@ -995,7 +1002,7 @@ const CSV_H = {
         elo:'Elo', rank:'Elo rank', partite:'Appearances', gol:'Goals', assist:'Assists', minuti:'Minutes', fonti:'Sources', tm:'Transfermarkt link',
         sess:'Evaluation sessions', data:'Last observation date', stagione:'Season', evento:'Event', partita:'Match',
         avv:'Opponent level', scout:'Scout', giudizio:'Judgement', voto:'Scout rating', mTec:'Technical average', mFm:'Physical/mental average',
-        mGlob:'Overall average', note:'Scout notes',
+        mGlob:'Overall average', note:'Scout notes', idrep:'Report ID',
         g_tec:'Technical', g_fm:'Physical/Mental', g_gk_tec:'Goalkeeper technical', g_gk_fm:'Goalkeeper physical/mental' },
 };
 function esportaCSV(){
@@ -1023,6 +1030,7 @@ function esportaCSV(){
     [H.mTec, (g,r,n,m)=>m ? num(m.mediaTec,1) : ''], [H.mFm, (g,r,n,m)=>m ? num(m.mediaFm,1) : ''], [H.mGlob, (g,r,n,m)=>m ? num(m.mediaGlob,1) : ''],
     ...ATTR.map(a=>[`${H['g_'+a.group]} - ${a.lab}`, (g,r)=>num(r[a.bag] && r[a.bag][a.id])]),
     [H.note, (g,r)=>r.note_scout],
+    [H.idrep, (g,r)=>r.id],   // permette di ricaricare il CSV senza creare doppioni
   ];
 
   // ";" come separatore e BOM UTF-8: Excel in italiano apre il file già in colonne e con gli accenti giusti.
@@ -1043,6 +1051,99 @@ function esportaCSV(){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 1000);   // revocare subito può annullare il download in alcuni browser
 }
+
+// ---- ricarica dal CSV: ricostruisce i report scouting da un CSV esportato da Scout ----
+// Serve come paracadute se i report vengono cancellati per sbaglio. Dal CSV si recupera
+// l'ultima valutazione di ogni giocatore (anagrafica, giudizio, voto, tutti i voti, note):
+// lo storico completo delle sessioni resta nel backup .json e nella cartella dati.
+// Riconosce le intestazioni in italiano e in inglese, il ";" o la "," come separatore e
+// i file risalvati da Excel (date gg/mm/aaaa, decimali con la virgola).
+window.ScoutCSV = (function(){
+  function parse(text){
+    text = text.replace(/^\uFEFF/, '');
+    const first = text.split(/\r?\n/, 1)[0];
+    const SEP = (first.split(';').length >= first.split(',').length) ? ';' : ',';
+    const rows = []; let row = [], cell = '', inQ = false;
+    for (let i = 0; i < text.length; i++){
+      const c = text[i];
+      if (inQ){
+        if (c === '"'){ if (text[i+1] === '"'){ cell += '"'; i++; } else inQ = false; }
+        else cell += c;
+      } else if (c === '"') inQ = true;
+      else if (c === SEP){ row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r'){
+        if (c === '\r' && text[i+1] === '\n') i++;
+        row.push(cell); rows.push(row); row = []; cell = '';
+      } else cell += c;
+    }
+    if (cell !== '' || row.length){ row.push(cell); rows.push(row); }
+    return rows.filter(r => r.some(v => v.trim() !== ''));
+  }
+  // toglie l'apostrofo messo in export davanti a = + - @ (protezione formule)
+  const clean = v => { v = (v ?? '').trim(); return /^'[=+\-@]/.test(v) ? v.slice(1) : v; };
+  const numero = v => { v = clean(v).replace(/\s/g,''); if (!v) return null;
+    if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(v)) v = v.replace(/\./g,'');   // 1.234,5 → 1234,5
+    const n = parseFloat(v.replace(',', '.')); return isNaN(n) ? null : n; };
+  const data = v => { v = clean(v); if (!v) return '';
+    let m = v.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    m = v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/);   // Excel italiano: 15/10/2026
+    if (m){ const y = m[3].length === 2 ? '20' + m[3] : m[3]; return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
+    return v; };
+
+  function toReports(text){
+    const rows = parse(text);
+    if (rows.length < 2) throw new Error('empty');
+    const head = rows[0].map(h => clean(h).toLowerCase());
+    // colonna → campo, accettando le intestazioni di entrambe le lingue
+    const idx = {};
+    Object.values(CSV_H).forEach(H => Object.entries(H).forEach(([k, lab]) => {
+      const i = head.indexOf(lab.toLowerCase()); if (i >= 0 && idx[k] === undefined) idx[k] = i; }));
+    if (idx.nome === undefined) throw new Error('not-scout');
+    const attrIdx = [];
+    ScoutReport.attributeColumns().forEach(a => {
+      const groups = Object.values(CSV_H).map(H => H['g_' + a.group]);
+      const labs = I18N.all('attr_' + a.id);
+      groups.forEach(g => labs.forEach(l => {
+        const i = head.indexOf(`${g} - ${l}`.toLowerCase());
+        if (i >= 0 && !attrIdx.some(x => x.a === a)) attrIdx.push({ a, i });
+      }));
+    });
+    const giudizi = [0,1,2,3].map(n => I18N.all('consi_' + n).map(x => x.toLowerCase()));
+
+    const out = [];
+    rows.slice(1).forEach(r => {
+      const get = k => idx[k] === undefined ? '' : clean(r[idx[k]]);
+      const attrs = { attr_tecnici: {}, attr_fisico_mentale: {} };
+      attrIdx.forEach(({a, i}) => { const n = numero(r[i]); if (n !== null) attrs[a.bag][a.id] = n; });
+      const haValutazione = get('idrep') || numero(get('sess')) > 0 || get('giudizio') ||
+        Object.keys(attrs.attr_tecnici).length || Object.keys(attrs.attr_fisico_mentale).length;
+      if (!haValutazione || !get('nome')) return;   // giocatore senza report: è già nel database
+      const parti = get('nome').split(/\s+/);
+      const g = get('giudizio').toLowerCase();
+      const consi = giudizi.findIndex(list => list.includes(g));
+      const oss = data(get('data'));
+      out.push({
+        id: get('idrep') || ('r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)),
+        nome: parti.length > 1 ? parti[0] : '', cognome: parti.length > 1 ? parti.slice(1).join(' ') : parti[0],
+        data_nascita: data(get('nascita')), nazionalita: get('naz'),
+        altezza: numero(get('alt')) ?? '', peso: numero(get('peso')) ?? '', piede: get('piede'),
+        ruolo_primario: get('ruolo1') || get('ruolo'), ruolo_secondario: get('ruolo2'),
+        squadra: get('squadra'), categoria: get('cat'), agente: get('agente'), contratto: data(get('scad')),
+        valore_stimato: get('valStim'),
+        data_osservazione: oss, stagione: get('stagione'), evento: get('evento'), partita: get('partita'),
+        livello_avversario: get('avv'), scout_cognome: get('scout'),
+        considerazione: consi >= 0 ? consi : 1, voto_numerico: numero(get('voto')),
+        note_scout: get('note'),
+        ...attrs,
+        created_at: oss ? new Date(oss).toISOString() : new Date().toISOString(),
+        updated_at: '',   // vuoto: se il report esiste ancora nell'app, la versione dell'app ha la precedenza
+        _ripristinato_da_csv: true,
+      });
+    });
+    return out;
+  }
+  return { parse, toReports };
+})();
 
 // ---- helpers -------------------------------------------------------------
 function numOr(v,d){ const n=parseFloat(v); return isNaN(n)?d:n; }

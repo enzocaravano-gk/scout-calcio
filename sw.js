@@ -2,7 +2,7 @@
    Strategia "prima la rete": se c'è connessione si scarica sempre l'ultima versione
    (così gli aggiornamenti pubblicati arrivano subito); se manca, si usa la copia salvata.
    Non tocca mai i report: quelli stanno nella cartella del dispositivo / nel browser. */
-const CACHE = 'scout-v20261022c';
+const CACHE = 'scout-v20261022d';
 const CORE = ['./', 'index.html', 'i18n.js', 'giocatori.js', 'charts.js', 'scouting_report.js',
   'branding.js', 'folder_sync.js', 'fonts/fonts.css', 'manifest.webmanifest', 'icons/icon-192.png'];
 

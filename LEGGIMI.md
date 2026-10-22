@@ -164,8 +164,8 @@ la cartella → consenti l'accesso. Solo la prima volta.
 computer**. Safari, Firefox, iPhone e iPad non lo permettono. Lì (e ovunque) restano:
 
 - **Esporta backup**: scarica un unico file con tutti i report;
-- **Importa backup**: lo ricarica, unendo senza cancellare nulla. Accetta anche un
-  singolo report `.json` ricevuto da un collega.
+- **Importa backup o CSV**: lo ricarica, unendo senza cancellare nulla. Accetta anche un
+  singolo report `.json` ricevuto da un collega o un CSV esportato da Scout.
 
 ## Cambio lingua (Italiano / English)
 
@@ -196,6 +196,13 @@ Il **PDF generato** resta con l'intestazione e le etichette di sezione in italia
 
   Il file si apre in Excel (italiano) già diviso in colonne, con accenti corretti e
   decimali con la virgola.
+
+  **Il CSV serve anche da salvataggio**: se i report vengono cancellati per sbaglio,
+  Personalizza → Cartella dati → **"Importa backup o CSV"** → scegli il CSV. I report
+  vengono ricostruiti (anagrafica, giudizio, voto, tutti i voti, note). Va bene anche
+  un CSV aperto e risalvato con Excel. Ricaricarlo più volte non crea doppioni.
+  Attenzione: dal CSV si recupera l'**ultima** valutazione di ogni giocatore; per avere
+  anche lo **storico di tutte le sessioni** usa "Esporta backup" (.json) o la cartella dati.
 
 ## File nella cartella
 

@@ -49,8 +49,10 @@
       fs_unsupported: 'Questo browser non può collegare una cartella (serve Chrome o Edge su computer). Usa Esporta / Importa backup.',
       fs_choose: 'Scegli cartella', fs_change: 'Cambia cartella', fs_reconnect: 'Ricollega cartella', fs_disconnect: 'Scollega',
       fs_sync_now: 'Aggiorna ora', fs_last: 'ultimo aggiornamento {t}',
-      fs_export: 'Esporta backup', fs_import: 'Importa backup',
-      fs_import_ok: 'Importati {a} report nuovi, aggiornati {u}.', fs_import_err: 'File non valido: serve un backup di Scout o un report .json.',
+      fs_export: 'Esporta backup', fs_import: 'Importa backup o CSV',
+      fs_import_ok: 'Importati {a} report nuovi, aggiornati {u}.', fs_import_err: 'File non valido: serve un backup di Scout (.json), un report .json o un CSV esportato da Scout.',
+      fs_import_csv_ok: 'Ripristinati {a} report dal CSV ({s} già presenti, lasciati invariati). Dal CSV si recupera l\'ultima valutazione di ogni giocatore.',
+      fs_import_csv_none: 'Nel CSV non ci sono valutazioni da ripristinare (nessun giocatore con report scouting).',
       fs_export_none: 'Non ci sono report da esportare.',
       fs_confirm_disc: 'Scollegare la cartella? I file restano sul dispositivo e i report restano anche nell\'app.',
 
@@ -183,8 +185,10 @@
       fs_unsupported: 'This browser cannot link a folder (Chrome or Edge on a computer required). Use Export / Import backup.',
       fs_choose: 'Choose folder', fs_change: 'Change folder', fs_reconnect: 'Relink folder', fs_disconnect: 'Unlink',
       fs_sync_now: 'Refresh now', fs_last: 'last refresh {t}',
-      fs_export: 'Export backup', fs_import: 'Import backup',
-      fs_import_ok: 'Imported {a} new reports, updated {u}.', fs_import_err: 'Invalid file: a Scout backup or a report .json is required.',
+      fs_export: 'Export backup', fs_import: 'Import backup or CSV',
+      fs_import_ok: 'Imported {a} new reports, updated {u}.', fs_import_err: 'Invalid file: a Scout backup (.json), a report .json or a CSV exported from Scout is required.',
+      fs_import_csv_ok: 'Restored {a} reports from the CSV ({s} already present, left unchanged). The CSV holds the latest evaluation of each player.',
+      fs_import_csv_none: 'The CSV contains no evaluations to restore (no player with a scouting report).',
       fs_export_none: 'There are no reports to export.',
       fs_confirm_disc: 'Unlink the folder? The files stay on your device and the reports stay in the app.',
 
@@ -288,5 +292,8 @@
     try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
   }
 
-  window.I18N = { t, getLang, setLang };
+  // lo stesso testo in tutte le lingue (serve a ricaricare un CSV esportato in un'altra lingua)
+  function all(key) { return Object.keys(DICT).map(l => DICT[l][key]).filter(Boolean); }
+
+  window.I18N = { t, getLang, setLang, all };
 })();
